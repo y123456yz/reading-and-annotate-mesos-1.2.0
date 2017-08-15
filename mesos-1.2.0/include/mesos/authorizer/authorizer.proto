@@ -1,0 +1,198 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import "mesos/mesos.proto";
+import "mesos/quota/quota.proto";
+
+package mesos.authorization;
+
+option java_package = "org.apache.mesos.authorization";
+option java_outer_classname = "Protos";
+
+
+// A `Subject` is the entity which desires to execute an `Action` on
+// an `Object`. A `Subject` has a number of optional fields (currently
+// only a `value`).
+// NOTE: A `Subject` should always come with at least one set field.
+message Subject {
+  optional string value = 1;
+}
+
+
+// An `Object` is the entity on which a `Subject` wishes to execute an
+// `Action`. An `Object` has a number of optional fields of which,
+// depending on the action, one or more fields must be set. For
+// example the `VIEW_EXECUTOR` action expects the `executor_info` and
+// `framework_info` field to be set. The `Action` comments explain
+// what to expect.
+// NOTE: An `Object` should always come with at least one set field.
+message Object {
+  optional string value = 1;
+  optional FrameworkInfo framework_info = 2;
+  optional Task task = 3;
+  optional TaskInfo task_info = 4;
+  optional ExecutorInfo executor_info = 5;
+  optional quota.QuotaInfo quota_info = 6;
+  optional WeightInfo weight_info = 7;
+  optional Resource resource = 8;
+  optional CommandInfo command_info = 9;
+}
+
+
+// List of authorizable actions supported in Mesos.
+// NOTE: Values in this enum should be kept in
+// numerical order to prevent accidental aliasing.
+enum Action {
+  option allow_alias = true;
+
+  // This must be the first enum value in this list, to
+  // ensure that if 'type' is not set, the default value
+  // is UNKNOWN. This enables enum values to be added
+  // in a backwards-compatible way. See: MESOS-4997.
+  UNKNOWN = 0;
+
+  // Actions named *_WITH_foo may set a foo in `Object.value`.
+
+  // `REGISTER_FRAMEWORK` will have an object with `FrameworkInfo` set.
+  // The `_WITH_ROLE` alias is deprecated and will be removed after
+  // Mesos 1.2's deprecation cycle ends. The `value` field will continue
+  // to be set until that time.
+  REGISTER_FRAMEWORK = 1;
+  REGISTER_FRAMEWORK_WITH_ROLE = 1;
+
+  // `RUN_TASK` will have an object with `FrameworkInfo` and `TaskInfo` set.
+  RUN_TASK = 2;
+
+  // `TEARDOWN_FRAMEWORK` will have an object with `FrameworkInfo` set.
+  // The `_WITH_PRINCIPAL` alias is deprecated and will be removed after
+  // Mesos 1.2's deprecation cycle ends. The `value` field will continue
+  // to be set until that time.
+  TEARDOWN_FRAMEWORK = 3;
+  TEARDOWN_FRAMEWORK_WITH_PRINCIPAL = 3;
+
+  // `RESERVE_RESOURCES` will have an object with `Resource` set.
+  // The `_WITH_ROLE` alias is deprecated and will be removed after
+  // Mesos 1.2's deprecation cycle ends. The `value` field will continue
+  // to be set until that time.
+  RESERVE_RESOURCES = 4;
+  RESERVE_RESOURCES_WITH_ROLE = 4;
+
+  // `UNRESERVE_RESOURCES` will have an object with `Resource` set.
+  // The `_WITH_PRINCIPAL` alias is deprecated and will be removed after
+  // Mesos 1.2's deprecation cycle ends. The `value` field will continue
+  // to be set until that time.
+  UNRESERVE_RESOURCES = 5;
+  UNRESERVE_RESOURCES_WITH_PRINCIPAL = 5;
+
+  // `CREATE_VOLUME` will have an object with `Resource` set.
+  // The `_WITH_ROLE` alias is deprecated and will be removed after
+  // Mesos 1.2's deprecation cycle ends. The `value` field will continue
+  // to be set until that time.
+  CREATE_VOLUME = 6;
+  CREATE_VOLUME_WITH_ROLE = 6;
+
+  // `DESTROY_VOLUME` will have an object with `Resource` set.
+  // The `_WITH_PRINCIPAL` alias is deprecated and will be removed after
+  // Mesos 1.2's deprecation cycle ends. The `value` field will continue
+  // to be set until that time.
+  DESTROY_VOLUME = 7;
+  DESTROY_VOLUME_WITH_PRINCIPAL = 7;
+
+  GET_ENDPOINT_WITH_PATH = 8;
+  VIEW_ROLE = 9;
+
+  // `UPDATE_WEIGHT` will have an object with `WeightInfo` set.
+  // The `_WITH_ROLE` alias is deprecated and will be removed after
+  // Mesos 1.2's deprecation cycle ends. The `value` field will continue
+  // to be set until that time.
+  UPDATE_WEIGHT = 10;
+  UPDATE_WEIGHT_WITH_ROLE = 10;
+
+  // `GET_QUOTA` will have an object with `QuotaInfo` set.
+  // The `_WITH_ROLE` alias is deprecated and will be removed after
+  // Mesos 1.2's deprecation cycle ends. The `value` field will continue
+  // to be set until that time.
+  GET_QUOTA = 11;
+  GET_QUOTA_WITH_ROLE = 11;
+
+  // `UPDATE_QUOTA` will have an object with a `QuotaInfo` set.
+  UPDATE_QUOTA = 12;
+
+  // `VIEW_FRAMEWORK` will have an object with a `FrameworkInfo` set.
+  VIEW_FRAMEWORK = 13;
+
+  // `VIEW_TASK` will have an object with (`Task` or `TaskInfo`) and
+  // `FrameworkInfo` set.
+  VIEW_TASK = 14;
+
+  // `VIEW_EXECUTOR` will have an object with `ExecutorInfo` and
+  // `FrameworkInfo` set.
+  VIEW_EXECUTOR = 15;
+
+  // This action will have an object which commonly has both a
+  // `FrameworkInfo` and `ExecutorInfo` set. In exceptional cases the
+  // object might have nothing set. See MESOS-5730.
+  ACCESS_SANDBOX = 16;
+
+  // This action will not fill in any object fields, since the object
+  // is the master/agent log itself.
+  ACCESS_MESOS_LOG = 17;
+
+  // This action will not fill in any object fields, since the object
+  // is the entire set of flags.
+  VIEW_FLAGS = 18;
+
+  // This action will always set the `ExecutorInfo`, `FrameworkInfo` fields
+  // and optionally a `CommandInfo` if available.
+  LAUNCH_NESTED_CONTAINER = 19;
+
+  // This action will set objects of type `ExecutorInfo` and `FrameworkInfo`.
+  KILL_NESTED_CONTAINER = 20;
+
+  // This action will set objects of type `ExecutorInfo` and `FrameworkInfo`.
+  WAIT_NESTED_CONTAINER = 21;
+
+  // This action will always set the `ExecutorInfo`, `FrameworkInfo` fields
+  // and optionally a `CommandInfo` if available.
+  LAUNCH_NESTED_CONTAINER_SESSION = 22;
+
+  // This action will set objects of type `ExecutorInfo` and `FrameworkInfo`.
+  ATTACH_CONTAINER_INPUT = 23;
+
+  // This action will set objects of type `ExecutorInfo` and `FrameworkInfo`.
+  ATTACH_CONTAINER_OUTPUT = 24;
+
+  // This action will set objects of type `ExecutorInfo` and `FrameworkInfo`.
+  VIEW_CONTAINER = 25;
+
+  // This action will not fill in any object fields, since a principal is
+  // either allowed to change the log level or he is unauthorized.
+  SET_LOG_LEVEL = 26;
+}
+
+
+// A `Request` is a <subject, action, object> tuple which can be read
+// as "Can `subject` perform `action` with `object`?".
+message Request {
+  // An unset `subject` means "unspecified".
+  optional Subject subject = 1;
+
+  // Enum fields should be optional, see: MESOS-4997.
+  optional Action action = 2;
+
+  // An unset `object` means "unspecified".
+  optional Object object = 3;
+}

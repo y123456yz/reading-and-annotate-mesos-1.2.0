@@ -1,0 +1,234 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package mesos.slave;
+
+import "mesos/mesos.proto";
+
+import "mesos/appc/spec.proto";
+
+import "mesos/docker/v1.proto";
+
+/**
+ * Some containers are launched in conjunction with a specific
+ * `ContainerClass`. These classes allow an isolator to customize
+ * their functionality based on the class of container being isolated.
+ * The classes we currently define are below.
+ */
+enum ContainerClass {
+  DEFAULT = 1;
+  DEBUG = 2;
+}
+
+
+/**
+ * Information when an executor is impacted by a resource limitation
+ * and should be terminated. Intended to support resources like memory
+ * where the Linux kernel may invoke the OOM killer, killing some/all
+ * of a container's processes.
+ */
+message ContainerLimitation {
+  // Resources that triggered the limitation.
+  // NOTE: 'Resources' is used here because the resource may span
+  // multiple roles (e.g. `"mem(*):1;mem(role):2"`).
+  repeated Resource resources = 1;
+
+  // Description of the limitation.
+  optional string message = 2;
+
+  // The container will be terminated when a resource limitation is
+  // reached. This field specifies the 'reason' that will be sent in
+  // the status update for any remaining non-terminal tasks when the
+  // container is terminated.
+  optional TaskStatus.Reason reason = 3;
+}
+
+
+/**
+ * This message is derived from slave::state::RunState. It contains
+ * only those fields that are needed by Isolators for recovering the
+ * containers. The reason for not using RunState instead is to avoid
+ * any dependency on RunState and in turn on internal protobufs.
+ */
+message ContainerState {
+  // This field only exists for top level containers.
+  optional ExecutorInfo executor_info = 1;
+
+  // The container Id.
+  required ContainerID container_id = 2;
+
+  // The pid of the init process in the container.
+  required uint64 pid = 3;
+
+  // The sandbox directory.
+  required string directory = 4;
+}
+
+
+/**
+ * The container recovery information that will be passed to each
+ * isolator during 'recover'.
+ */
+message ContainerRecoverInfo {
+  // The agent-checkpointed containers.
+  repeated ContainerState checkpointed_container_states = 1;
+
+  // This field is deprecated. It represents the top level orphans.
+  // Orphans are those containers that are known to the Launcher but
+  // are not checkpointed by the agent.
+  repeated ContainerID orphan_container_ids = 2;
+
+  // All containers that are known to the Launcher. This also includes
+  // child containers.
+  repeated ContainerID known_container_ids = 3;
+}
+
+
+/**
+ * The container configuration that will be passed to each isolator
+ * during `prepare`.
+ */
+message ContainerConfig {
+  // The executor associated with this container.
+  optional ExecutorInfo executor_info = 8;
+
+  // The task (optional) associated with this container.
+  optional TaskInfo task_info = 9;
+
+  // The command used to launch the container.
+  required CommandInfo command_info = 11;
+
+  // The information about the container.
+  optional ContainerInfo container_info = 12;
+
+  // Resources associated with the container during launch.
+  repeated Resource resources = 13;
+
+  // The class of container being launched. Used by isolators to
+  // perform different operations depending on the class.
+  optional ContainerClass container_class = 14;
+
+  // The work directory for the container in the host filesystem.
+  required string directory = 3;
+
+  // The user the task will be run as.
+  optional string user = 4;
+
+  // NOTE: 'rootfs' and 'docker' below are for the executor in custom
+  // executor case, and they are for the task in command task case.
+
+  // The root filesystem for the container.
+  optional string rootfs = 5;
+
+  // Docker v1 image manifest.
+  message Docker {
+    optional docker.spec.v1.ImageManifest manifest = 1;
+  }
+
+  optional Docker docker = 7;
+
+  message Appc {
+    optional appc.spec.ImageManifest manifest = 1;
+  }
+
+  optional Appc appc = 10;
+}
+
+
+// This message is used to describe how to handle standard
+// input/output/error for the container.
+message ContainerIO {
+  enum Type {
+    UNKNOWN = 0;
+    FD = 1;       // File descriptor. Ownership will be transferred.
+    PATH = 2;     // File path.
+  }
+
+  optional Type type = 1;
+  optional int32 fd = 2;
+  optional string path = 3;
+}
+
+
+/**
+ * Protobuf returned by Isolator::prepare(). The command is executed
+ * by the Launcher in the containerized context.
+ * Note: Currently, any URIs or Environment in the CommandInfo will be
+ * ignored; only the command value is used. Further, we only accept
+ * shell commands for the preparation commands.
+ */
+message ContainerLaunchInfo {
+  // The additional preparation commands to execute before
+  // executing the command.
+  repeated CommandInfo pre_exec_commands = 1;
+  optional Environment environment = 2;
+
+  // (Linux only) The root filesystem for the container.
+  optional string rootfs = 3;
+
+  // (Linux only) The namespaces a nested container
+  // should enter in its parent before cloning.
+  repeated int32 enter_namespaces = 9;
+
+  // (Linux only) The namespaces that should be cloned for the container.
+  // The namespaces are created while launching the executor.
+  repeated int32 clone_namespaces = 4;
+
+  // (POSIX only) The user to launch the command as.
+  optional string user = 10;
+
+  // If specified, it'll become the launch command for the custom
+  // executor, or the launch command for the user task in the case of
+  // a command task.
+  optional CommandInfo command = 5;
+
+  // The working directory for the container.
+  // NOTE: This is different than Mesos sandbox.
+  optional string working_directory = 6;
+
+  // (Linux only) The capabilities requested for the container.
+  // The capabilities are set while launching the container.
+  optional CapabilityInfo capabilities = 7;
+
+  // (POSIX only) The rlimits requested for the container.
+  // The rlimits are set while launching the container.
+  optional RLimitInfo rlimits = 8;
+
+  // I/O information about the container to be launched. If not set,
+  // the container will inherit the agent standard input/output/error.
+  optional ContainerIO in = 11;
+  optional ContainerIO out = 12;
+  optional ContainerIO err = 13;
+
+  // (POSIX only) The slave path of the pseudo terminal.
+  optional string tty_slave_path = 14;
+}
+
+
+/**
+ * Information about a container termination, returned by the
+ * containerizer to the slave.
+ */
+message ContainerTermination {
+  // Exit status of the process.
+  optional int32 status = 3;
+
+  // The 'state', 'reasons' and 'message' of a status update for
+  // non-terminal tasks when the executor is terminated.
+  optional TaskState state = 4;
+  repeated TaskStatus.Reason reasons = 5;
+  optional string message = 2;
+}

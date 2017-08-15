@@ -1,0 +1,435 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// TODO(arojas): Consider removing this file from the public interface.
+
+package mesos;
+
+option java_package = "org.apache.mesos";
+option java_outer_classname = "Protos";
+
+
+/**
+ * ACLs used for local authorization (See authorization.md file in the docs).
+ */
+message ACL {
+  // Entity is used to describe a subject(s) or an object(s) of an ACL.
+  //
+  // NOTE: To allow everyone access to an `Entity` set its type to
+  // `ANY`. To deny access to an `Entity` set its type to `NONE`.
+  //
+  // NOTE: When adding new actions to these proto definitions,
+  // declare entities in these messages as `required`. Absent
+  // `Entity` is ambiguous: it can be interpreted as `NONE` or `ANY`.
+  message Entity {
+    enum Type {
+      SOME = 0;
+      ANY = 1;
+      NONE = 2;
+    }
+    optional Type type = 1 [default = SOME];
+    repeated string values = 2; // Ignored for ANY/NONE.
+  }
+
+  // ACLs.
+  message RegisterFramework {
+    // Subjects: Framework principals.
+    required Entity principals = 1;
+
+    // Objects: Roles for resource offers.
+    required Entity roles = 2;
+  }
+
+  message RunTask {
+    // Subjects: Framework principals.
+    required Entity principals = 1;
+
+    // Objects: Users to run the tasks/executors as.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to shutdown frameworks of other
+  // principals.
+  // TODO(gyliu513): Remove this message at the end of the deprecation
+  // cycle which started with 0.27. It will be fully replaced by
+  // TeardownFramework then.
+  message ShutdownFramework {
+    // Subjects.
+    required Entity principals = 1;
+
+    // Objects.
+    required Entity framework_principals = 2;
+  }
+
+  // Which principals are authorized to teardown frameworks of other
+  // principals.
+  message TeardownFramework {
+    // Subjects.
+    required Entity principals = 1;
+
+    // Objects.
+    required Entity framework_principals = 2;
+  }
+
+  // Specifies which roles a principal can reserve resources for.
+  message ReserveResources {
+    // Subjects: Framework principal or Operator username.
+    required Entity principals = 1;
+
+    // Objects: The principal(s) can reserve resources for these roles.
+    required Entity roles = 2;
+  }
+
+  // Specifies which principals can unreserve which principals'
+  // reserved resources.
+  message UnreserveResources {
+    // Subjects: Framework principal or Operator username.
+    required Entity principals = 1;
+
+    // Objects: Principal of the entity that reserved the resources.
+    required Entity reserver_principals = 2;
+  }
+
+  // Specifies which roles a principal can create volumes for.
+  message CreateVolume {
+    // Subjects: Framework principal or Operator username.
+    required Entity principals = 1;
+
+    // Objects: The principal(s) can create volumes for these roles.
+    required Entity roles = 2;
+  }
+
+  // Specifies which principals can destroy volumes
+  // created by which other principals.
+  message DestroyVolume {
+    // Subjects: Framework principal or Operator username.
+    required Entity principals = 1;
+
+    // Objects: Principal of the entity that created the volume.
+    required Entity creator_principals = 2;
+  }
+
+  // Which principals are authorized to see quotas for the given roles.
+  message GetQuota {
+    // Subjects: Operator username.
+    required Entity principals = 1;
+
+    // Objects: The list of roles whose quotas can be seen.
+    required Entity roles = 2;
+  }
+
+  // Which principals are authorized to update quotas for the given roles.
+  message UpdateQuota {
+    // Subjects: Operator username.
+    required Entity principals = 1;
+
+    // Objects: The list of roles whose quotas can be updated.
+    required Entity roles = 2;
+  }
+
+  // Which principals are authorized to set quotas for given roles.
+  //
+  // TODO(zhitao): Remove this message at the end of the deprecation cycle
+  // which started with 1.0. It will be fully replaced by `UpdateQuota`.
+  message SetQuota {
+    // Subjects: Operator username.
+    required Entity principals = 1;
+
+    // Objects: The list of roles for which a quota can be set.
+    required Entity roles = 2;
+  }
+
+  // Which principals can remove quotas set by which other principals.
+  //
+  // TODO(zhitao): Remove this message at the end of the deprecation cycle
+  // which started with 1.0. It will be fully replaced by `UpdateQuota`.
+  message RemoveQuota {
+    // Subjects: Operator username.
+    required Entity principals = 1;
+
+    // Objects: Principal of the entity that set the quota.
+    required Entity quota_principals = 2;
+  }
+
+  // Which principals are authorized to view information (including weights)
+  // about the given roles.
+  message ViewRole {
+    // Subjects: Operator username.
+    required Entity principals = 1;
+
+    // Objects: The list of roles which can be seen.
+    required Entity roles = 2;
+  }
+
+  // Which principals are authorized to update weights for the given roles.
+  message UpdateWeight {
+    // Subjects: Operator username.
+    required Entity principals = 1;
+
+    // Objects: The list of roles whose weight can be updated.
+    required Entity roles = 2;
+  }
+
+  // Which principals are authorized to GET HTTP endpoints at the given paths.
+  message GetEndpoint {
+    // Subjects: HTTP username.
+    required Entity principals = 1;
+
+    // Objects: The list of paths that can be retrieved.
+    required Entity paths = 2;
+  }
+
+  // Which principals are authorized to view framework information for
+  // frameworks running as the given users.
+  message ViewFramework {
+    // Subjects: Operator username.
+    required Entity principals = 1;
+
+    // Objects: The list of operating system users (e.g., linux users) whose
+    // frameworks can be viewed.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to view task information for tasks
+  // running as the given users.
+  message ViewTask {
+    // Subjects: Operator username.
+    required Entity principals = 1;
+
+    // Objects: The list of operating system users (e.g., linux users) whose
+    // tasks can be viewed.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to view executor information for executors
+  // running as the given users.
+  message ViewExecutor {
+    // Subjects: Operator username.
+    required Entity principals = 1;
+
+    // Objects: The list of operating system users (e.g., linux users) whose
+    // executors can be viewed.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to access the sandboxes of executors
+  // running as the given users.
+  message AccessSandbox {
+    // Subjects: HTTP Username.
+    required Entity principals = 1;
+
+    // Objects: The list of operating system users (e.g., linux users) whose
+    // executors/tasks sandboxes can be accessed.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to access the Mesos logs.
+  message AccessMesosLog {
+    // Subjects: HTTP Username.
+    required Entity principals = 1;
+
+    // Objects: Given implicitly. Use Entity type ANY or NONE to allow or deny
+    // access.
+    required Entity logs = 2;
+  }
+
+  // Which principals are authorized to access the command-line flags used to
+  // launch the master/agent.
+  message ViewFlags {
+    // Subjects: HTTP Username.
+    required Entity principals = 1;
+
+    // Objects: Given implicitly. Use Entity type ANY or NONE to allow or deny
+    // access.
+    required Entity flags = 2;
+  }
+
+  // Which principals are authorized to launch nested containers running as
+  // the given users.
+  message LaunchNestedContainerAsUser {
+    // Subjects: HTTP Username.
+    required Entity principals = 1;
+
+    // Objects: The list of operating system users (e.g., linux users) to run
+    // the nested containers as.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to launch a nested container under a
+  // top-level container running as the given user.
+  message LaunchNestedContainerUnderParentWithUser {
+    // Subjects: HTTP Username.
+    required Entity principals = 1;
+
+    // Objects: The operating system users (e.g. linux users) of the top-level
+    // containers under which the principal may launch a nested container.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to launch nested container sessions
+  // running as the given users.
+  message LaunchNestedContainerSessionAsUser {
+    // Subjects: HTTP Username.
+    required Entity principals = 1;
+
+    // Objects: The list of operating system users (e.g., linux users) a nested
+    // container (TTY) session can be run as.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to launch nested container sessions under
+  // a top-level container whose executor was launched with the given user.
+  message LaunchNestedContainerSessionUnderParentWithUser {
+    // Subjects: HTTP Username.
+    required Entity principals = 1;
+
+    // Objects: The operating system users (e.g. linux users) of the top-level
+    // containers under which the principal may launch a nested container
+    // session.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to attach to the input of a nested
+  // container whose executor was launched with the given user.
+  message AttachContainerInput {
+    // Subjects: HTTP Username.
+    required Entity principals = 1;
+
+    // Objects: The list of operating system users (e.g., linux users) whose
+    // containers are available to connect the stdin.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to attach to the output of a nested
+  // container whose executor was launched with the given user.
+  message AttachContainerOutput {
+    // Subjects: HTTP Username.
+    required Entity principals = 1;
+
+    // Objects: The list of operating system users (e.g., linux users) whose
+    // containers are available to connect the stdout and stderr.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to kill a nested container under a top
+  // level container whose executor was launched with the given user.
+  message KillNestedContainer {
+    // Subjects: HTTP Username.
+    required Entity principals = 1;
+
+    // Objects: The list of operating system users (e.g., linux users) whose
+    // nested containers can be killed.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to wait on a nested container under a top
+  // level container whose executor was launched with the given user.
+  message WaitNestedContainer {
+    // Subjects: HTTP Username.
+    required Entity principals = 1;
+
+    // Objects: The list of operating system users (e.g., linux users) whose
+    // nested containers can be waited on.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to see the container metadata of a
+  // container whose executor is running as the given operating system user.
+  message ViewContainer {
+    // Subjects: HTTP Username.
+    required Entity principals = 1;
+
+    // Objects: The list of operating system users (e.g., linux users) whose
+    // container metadata can viewed.
+    required Entity users = 2;
+  }
+
+  // Which principals are authorized to change the log level of the
+  // master/agent.
+  message SetLogLevel {
+    // Subjects: HTTP Username.
+    required Entity principals = 1;
+
+    // Objects: Given implicitly. Use Entity type ANY or NONE to allow or deny
+    // access.
+    required Entity level = 2;
+  }
+}
+
+
+/**
+ * Collection of ACL.
+ *
+ * Each authorization request is evaluated against the ACLs in the order
+ * they are defined.
+ *
+ * For simplicity, the ACLs for a given action are not aggregated even
+ * when they have the same subjects or objects. The first ACL that
+ * matches the request determines whether that request should be
+ * permitted or not. An ACL matches iff both the subjects
+ * (e.g., clients, principals) and the objects (e.g., urls, users,
+ * roles) of the ACL match the request.
+ *
+ * If none of the ACLs match the request, the 'permissive' field
+ * determines whether the request should be permitted or not.
+ *
+ * TODO(vinod): Do aggregation of ACLs when possible.
+ *
+ */
+message ACLs {
+  optional bool permissive = 1 [default = true];
+  repeated ACL.RegisterFramework register_frameworks = 2;
+  repeated ACL.RunTask run_tasks = 3;
+  // TODO(gyliu513): Remove this shutdown_frameworks at the
+  // end of the deprecation cycle which started on 0.27.
+  repeated ACL.ShutdownFramework shutdown_frameworks = 4;
+  repeated ACL.ReserveResources reserve_resources = 5;
+  repeated ACL.UnreserveResources unreserve_resources = 6;
+  repeated ACL.CreateVolume create_volumes = 7;
+  repeated ACL.DestroyVolume destroy_volumes = 8;
+
+  // TODO(zhitao): Remove the following two fields at the end
+  // of the deprecation cycle which started with 1.0.
+  repeated ACL.SetQuota set_quotas = 9 [deprecated = true];
+  repeated ACL.RemoveQuota remove_quotas = 10 [deprecated = true];
+
+  repeated ACL.TeardownFramework teardown_frameworks = 11;
+  repeated ACL.UpdateWeight update_weights = 12;
+  repeated ACL.GetEndpoint get_endpoints = 13;
+  repeated ACL.GetQuota get_quotas = 14;
+  repeated ACL.UpdateQuota update_quotas = 15;
+  repeated ACL.ViewFramework view_frameworks = 16;
+  repeated ACL.ViewTask view_tasks = 17;
+  repeated ACL.ViewExecutor view_executors = 18;
+  repeated ACL.AccessSandbox access_sandboxes = 19;
+  repeated ACL.AccessMesosLog access_mesos_logs = 20;
+  repeated ACL.ViewRole view_roles = 21;
+  repeated ACL.ViewFlags view_flags = 22;
+  repeated ACL.LaunchNestedContainerAsUser
+      launch_nested_containers_as_user = 23;
+  repeated ACL.LaunchNestedContainerUnderParentWithUser
+      launch_nested_containers_under_parent_with_user = 24;
+  repeated ACL.KillNestedContainer kill_nested_containers = 25;
+  repeated ACL.WaitNestedContainer wait_nested_containers = 26;
+  repeated ACL.LaunchNestedContainerSessionAsUser
+      launch_nested_container_sessions_as_user = 27;
+  repeated ACL.LaunchNestedContainerSessionUnderParentWithUser
+      launch_nested_container_sessions_under_parent_with_user = 28;
+  repeated ACL.AttachContainerInput attach_containers_input = 29;
+  repeated ACL.AttachContainerOutput attach_containers_output = 30;
+  repeated ACL.ViewContainer view_containers = 31;
+  repeated ACL.SetLogLevel set_log_level = 32;
+}

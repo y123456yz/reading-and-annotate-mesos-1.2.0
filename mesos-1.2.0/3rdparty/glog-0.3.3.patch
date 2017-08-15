@@ -1,0 +1,202 @@
+diff --git a/src/symbolize.cc b/src/symbolize.cc
+index 30836de..3e90573 100644
+--- a/src/symbolize.cc
++++ b/src/symbolize.cc
+@@ -232,7 +232,7 @@
+     }
+     char header_name[kMaxSectionNameLen];
+     if (sizeof(header_name) < name_len) {
+-      RAW_LOG(WARNING, "Section name '%s' is too long (%"PRIuS"); "
++      RAW_LOG(WARNING, "Section name '%s' is too long (%" PRIuS "); "
+               "section will not be found (even if present).", name, name_len);
+       // No point in even trying.
+       return false;
+diff --git a/src/glog/stl_logging.h.in b/src/glog/stl_logging.h.in
+index 30836de..3e90573 100644
+--- a/src/glog/stl_logging.h.in
++++ b/src/glog/stl_logging.h.in
+@@ -50,10 +50,13 @@
+ #include <utility>
+ #include <vector>
+ 
+-#ifdef __GNUC__
++#if defined (__GNUC__) && !defined(_LIBCPP_VERSION)
+ # include <ext/hash_set>
+ # include <ext/hash_map>
+ # include <ext/slist>
++#elif defined(_LIBCPP_VERSION)
++# include <unordered_map>
++# include <unordered_set>
+ #endif
+ 
+ // Forward declare these two, and define them after all the container streams
+@@ -80,7 +83,7 @@ inline std::ostream& operator<<(std::ostream& out, \
+ OUTPUT_TWO_ARG_CONTAINER(std::vector)
+ OUTPUT_TWO_ARG_CONTAINER(std::deque)
+ OUTPUT_TWO_ARG_CONTAINER(std::list)
+-#ifdef __GNUC__
++#if defined (__GNUC__) && !defined(_LIBCPP_VERSION)
+ OUTPUT_TWO_ARG_CONTAINER(__gnu_cxx::slist)
+ #endif
+ 
+@@ -109,9 +112,12 @@ inline std::ostream& operator<<(std::ostream& out, \
+ 
+ OUTPUT_FOUR_ARG_CONTAINER(std::map)
+ OUTPUT_FOUR_ARG_CONTAINER(std::multimap)
+-#ifdef __GNUC__
++#if defined (__GNUC__) && !defined(_LIBCPP_VERSION)
+ OUTPUT_FOUR_ARG_CONTAINER(__gnu_cxx::hash_set)
+ OUTPUT_FOUR_ARG_CONTAINER(__gnu_cxx::hash_multiset)
++#elif defined(_LIBCPP_VERSION)
++OUTPUT_FOUR_ARG_CONTAINER(std::unordered_set)
++OUTPUT_FOUR_ARG_CONTAINER(std::unordered_multiset)
+ #endif
+ 
+ #undef OUTPUT_FOUR_ARG_CONTAINER
+@@ -124,9 +130,12 @@ inline std::ostream& operator<<(std::ostream& out, \
+   return out; \
+ }
+ 
+-#ifdef __GNUC__
++#if defined (__GNUC__) && !defined(_LIBCPP_VERSION)
+ OUTPUT_FIVE_ARG_CONTAINER(__gnu_cxx::hash_map)
+ OUTPUT_FIVE_ARG_CONTAINER(__gnu_cxx::hash_multimap)
++#elif defined(_LIBCPP_VERSION)
++OUTPUT_FIVE_ARG_CONTAINER(std::unordered_map)
++OUTPUT_FIVE_ARG_CONTAINER(std::unordered_multimap)
+ #endif
+ 
+ #undef OUTPUT_FIVE_ARG_CONTAINER
+diff --git a/src/stl_logging_unittest.cc b/src/stl_logging_unittest.cc
+index 5dcbc44..ee344ca 100644
+--- a/src/stl_logging_unittest.cc
++++ b/src/stl_logging_unittest.cc
+@@ -39,7 +39,7 @@
+ #include <string>
+ #include <vector>
+ 
+-#ifdef __GNUC__
++#if defined (__GNUC__) && !defined(_LIBCPP_VERSION)
+ # include <ext/hash_map>
+ # include <ext/hash_set>
+ #endif
+@@ -48,7 +48,7 @@
+ #include "googletest.h"
+ 
+ using namespace std;
+-#ifdef __GNUC__
++#if defined (__GNUC__) && !defined(_LIBCPP_VERSION)
+ using namespace __gnu_cxx;
+ #endif
+ 
+@@ -83,7 +83,7 @@ void TestSTLLogging() {
+     CHECK_EQ(m, copied_m);  // This must compile.
+   }
+ 
+-#ifdef __GNUC__
++#if defined (__GNUC__) && !defined(_LIBCPP_VERSION)
+   {
+     // Test a hashed simple associative container.
+     hash_set<int> hs;
+@@ -98,7 +98,7 @@ void TestSTLLogging() {
+   }
+ #endif
+ 
+-#ifdef __GNUC__
++#if defined (__GNUC__) && !defined(_LIBCPP_VERSION)
+   {
+     // Test a hashed pair associative container.
+     hash_map<int, string> hm;
+@@ -145,7 +145,7 @@ void TestSTLLogging() {
+     CHECK_EQ(m, copied_m);  // This must compile.
+   }
+ 
+-#ifdef __GNUC__
++#if defined (__GNUC__) && !defined(_LIBCPP_VERSION)
+   {
+     // Test a hashed simple associative container.
+     // Use a user defined hash function.
+diff --git a/src/demangle.cc b/src/demangle.cc
+index 0daf308..1136e0d 100644
+--- a/src/demangle.cc
++++ b/src/demangle.cc
+@@ -167,7 +167,7 @@ static size_t StrLen(const char *str) {
+ // Returns true if "str" has at least "n" characters remaining.
+ static bool AtLeastNumCharsRemaining(const char *str, int n) {
+   for (int i = 0; i < n; ++i) {
+-    if (str == '\0') {
++    if (str[i] == '\0') {
+       return false;
+     }
+   }
+@@ -223,7 +223,7 @@ static bool ParseTwoCharToken(State *state, const char *two_char_token) {
+ // Returns true and advances "mangled_cur" if we find any character in
+ // "char_class" at "mangled_cur" position.
+ static bool ParseCharClass(State *state, const char *char_class) {
+-  if (state->mangled_cur == '\0') {
++  if (state->mangled_cur[0] == '\0') {
+     return false;
+   }
+   const char *p = char_class;
+diff --git a/src/stacktrace_powerpc-inl.h b/src/stacktrace_powerpc-inl.h
+index 1090dde..03b9108 100644
+--- a/src/stacktrace_powerpc-inl.h
++++ b/src/stacktrace_powerpc-inl.h
+@@ -111,7 +111,7 @@ int GetStackTrace(void** result, int max_depth, int skip_count) {
+       result[n++] = *(sp+2);
+ #elif defined(_CALL_SYSV)
+       result[n++] = *(sp+1);
+-#elif defined(__APPLE__) || (defined(__linux) && defined(__PPC64__))
++#elif defined(__APPLE__) || ((defined(__linux) || defined(__linux__)) && defined(__PPC64__))
+       // This check is in case the compiler doesn't define _CALL_AIX/etc.
+       result[n++] = *(sp+2);
+ #elif defined(__linux)
+diff --git a/config.guess b/config.guess
+index 278f9e9..f048baa 100755
+--- a/config.guess
++++ b/config.guess
+@@ -911,6 +911,9 @@ EOF
+     ppc64:Linux:*:*)
+ 	echo powerpc64-unknown-linux-gnu
+ 	exit ;;
++    ppc64le:Linux:*:*)
++	echo powerpc64le-unknown-linux-gnu
++	exit ;;
+     alpha:Linux:*:*)
+ 	case `sed -n '/^cpu model/s/^.*: \(.*\)/\1/p' < /proc/cpuinfo` in
+ 	  EV5)   UNAME_MACHINE=alphaev5 ;;
+diff --git a/configure.ac b/configure.ac
+index 7b4d21e..88aa0af 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -127,27 +127,9 @@ if test x"$acx_pthread_ok" = x"yes"; then
+   AC_CHECK_LIB(pthread, pthread_self)
+ fi
+ 
+-# Check if there is google-gflags library installed.
+-SAVE_CFLAGS="$CFLAGS"
+-SAVE_LIBS="$LIBS"
+-AC_ARG_WITH(gflags, AS_HELP_STRING[--with-gflags=GFLAGS_DIR],
+-  GFLAGS_CFLAGS="-I${with_gflags}/include"
+-  GFLAGS_LIBS="-L${with_gflags}/lib -lgflags"
+-  CFLAGS="$CFLAGS $GFLAGS_CFLAGS"
+-  LIBS="$LIBS $GFLAGS_LIBS"
+-)
+-AC_CHECK_LIB(gflags, main, ac_cv_have_libgflags=1, ac_cv_have_libgflags=0)
+-if test x"$ac_cv_have_libgflags" = x"1"; then
+-  AC_DEFINE(HAVE_LIB_GFLAGS, 1, [define if you have google gflags library])
+-  if test x"$GFLAGS_LIBS" = x""; then
+-    GFLAGS_LIBS="-lgflags"
+-  fi
+-else
+-  GFLAGS_CFLAGS=
+-  GFLAGS_LIBS=
+-fi
+-CFLAGS="$SAVE_CFLAGS"
+-LIBS="$SAVE_LIBS"
++GFLAGS_CFLAGS=
++GFLAGS_LIBS=
++ac_cv_have_libgflags=0
+ 
+ # TODO(hamaji): Use official m4 macros provided by testing libraries
+ #               once the m4 macro of Google Mocking becomes ready.

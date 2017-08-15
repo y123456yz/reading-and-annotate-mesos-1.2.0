@@ -1,0 +1,105 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import "mesos/mesos.proto";
+import "mesos/maintenance/maintenance.proto";
+import "mesos/quota/quota.proto";
+
+package mesos.internal;
+
+/**
+ * A top level object that is managed by the Registrar and persisted in a
+ * replicated log.  This object is recovered upon master startup and failover.
+ */
+message Registry {
+  // NOTE: This object defines wrappers around existing objects in case
+  // the Registry wishes to store more information about the wrapped objects
+  // in the future.
+
+  message Master {
+    required MasterInfo info = 1;
+  }
+
+  message Slave {
+    required SlaveInfo info = 1;
+  }
+
+  message Slaves {
+    repeated Slave slaves = 1;
+  }
+
+  message UnreachableSlave {
+    required SlaveID id = 1;
+
+    // The time when the slave was marked unreachable by the master.
+    required TimeInfo timestamp = 2;
+  }
+
+  message UnreachableSlaves {
+    repeated UnreachableSlave slaves = 1;
+  }
+
+  message Machine {
+    required MachineInfo info = 1;
+  }
+
+  message Machines {
+    repeated Machine machines = 1;
+  }
+
+  message Quota {
+    required quota.QuotaInfo info = 1;
+  }
+
+  message Weight {
+    required WeightInfo info = 1;
+  }
+
+  // Most recent leading master.
+  optional Master master = 1;
+
+  // All admitted (healthy) slaves.
+  optional Slaves slaves = 2;
+
+  // Slaves that have failed health checks. They may or may not still
+  // be running.
+  //
+  // New entries are added to the end of this list; hence the first
+  // element of the list was added first (although if there is clock
+  // drift, it might not necessarily have the smallest timestamp). The
+  // size of this list is limited by the `registry_max_agent_age` and
+  // `registry_max_agent_count` flags.
+  optional UnreachableSlaves unreachable = 7;
+
+  // Holds a list of machines and some status information about each.
+  // See comments in `MachineInfo` for more information.
+  optional Machines machines = 3;
+
+  // Describes a schedule for taking down specific machines for maintenance.
+  // The schedule is meant to give hints to frameworks about potential
+  // unavailability of resources.  The `schedules` are related to the status
+  // information found in `machines`.
+  repeated maintenance.Schedule schedules = 4;
+
+  // A list of recorded quotas in the cluster. It does not hold an actual
+  // assignment of resources, a newly elected master shall reconstruct it
+  // from the cluster.
+  repeated Quota quotas = 5;
+
+  // A list of recorded weights in the cluster, a newly elected master shall
+  // reconstruct it from the registry.
+  repeated Weight weights = 6;
+}

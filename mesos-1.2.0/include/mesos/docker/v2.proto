@@ -1,0 +1,74 @@
+// Licensed to the Apache Software Foundation (ASF) under one
+// or more contributor license agreements.  See the NOTICE file
+// distributed with this work for additional information
+// regarding copyright ownership.  The ASF licenses this file
+// to you under the Apache License, Version 2.0 (the
+// "License"); you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package docker.spec.v2;
+
+import "mesos/docker/v1.proto";
+
+/**
+ * Protobuf for the Docker v2 image manifest JSON schema:
+ * https://github.com/docker/distribution/blob/master/docs/spec/manifest-v2-1.md
+ */
+message ImageManifest {
+  required string name = 1;
+  required string tag = 2;
+  required string architecture = 3;
+
+  message FsLayer {
+    required string blobSum = 1;
+  }
+
+  repeated FsLayer fsLayers = 4;
+
+  message History {
+    required string v1Compatibility = 1;
+
+    // NOTE: This field does not exist in the Docker v2 image manifest
+    // specification. It is the parsed version of 'v1Compatibility'
+    // above (which is a raw JSON).
+    optional v1.ImageManifest v1 = 2;
+  }
+
+  repeated History history = 5;
+  required uint32 schemaVersion = 6;
+
+  message Signature {
+
+    // The JSON Web Signature. For more detail please see:
+    // http://self-issued.info/docs/draft-ietf-jose-json-web-signature.html
+    message Header {
+
+      // The JSON Web Key. For more detail please see:
+      // https://tools.ietf.org/html/rfc7517 for more
+      message Jwk {
+        optional string crv = 1;    // The cryptographic curve.
+        optional string kid = 2;    // The key ID. OPTIONAL.
+        required string kty = 3;    // The key type. MUST be present in a JWK.
+        optional string x = 4;      // The base64url-encoded x coordinate.
+        optional string y = 5;      // The base64url-encoded y coordinate.
+      }
+
+      optional Jwk jwk = 1;         // The JSON Web Key. OPTIONAL.
+      required string alg = 2;      // The algorithm. MUST be present.
+    }
+
+    required Header header = 1;
+    required string signature = 2;
+    required string protected = 3;
+  }
+
+  repeated Signature signatures = 7;
+}
