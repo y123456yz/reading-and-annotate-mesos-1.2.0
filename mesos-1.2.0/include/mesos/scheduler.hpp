@@ -182,6 +182,35 @@ public:
 // it, stop it, or wait for it to finish) and to interact with Mesos
 // (e.g., launch tasks, kill tasks, etc.). See MesosSchedulerDriver
 // below for a concrete example of a SchedulerDriver.
+
+
+/*  
+ Framework注册过程: http://dongxicheng.org/apache-mesos/apache-mesos-framework-executor-registering/
+（1） JobTracker启动时，会调用MesosScheduler的start()方法
+（2） MesosScheduler的start()方法创建一个MesosSchedulerDriver对象，并将自己作为参数传入该对象。
+（3） MesosSchedulerDriver初始化，创建一个SchedulerProcess对象
+（4） MesosSchedulerDriver初始化，调用MasterDetector::create()，它将向SchedulerProcess对象发送一个NewMasterDetectedMessage消息
+（5） SchedulerProcess对象收到NewMasterDetectedMessage消息后，向Master发送一个RegisterFrameworkMessage消息
+（6） Master收到该消息后，保存相关信息，并返回FrameworkRegistedMessage消息，确认framework注册成功
+
+
+
+Apache Mesos的任务分配过程: http://dongxicheng.org/apache-mesos/apache-mesos-task-assignment/
+步骤1 当出现以下几种事件中的一种时，会触发资源分配行为：新框架注册、框架注销、增加节点、出现空闲资源等；
+步骤2 Mesos Master中的Allocator模块为某个框架分配资源，并将资源封装到ResourceOffersMessage（Protocal Buffer Message）中，SchedulerProcess通过网络传输给用户；
+步骤3 SchedulerProcess调用用户编写的Scheduler中的resourceOffers函数（不能版本可能有变动），告之有新资源可用；
+步骤4 用户的Scheduler调用MesosSchedulerDriver中的launchTasks()函数，告之将要启动的任务；
+步骤5 SchedulerProcess将待启动的任务封装到LaunchTasksMessage（Protocal Buffer Message）中，通过网络传输给Mesos Master；
+步骤6 Mesos Master将待启动的任务封装成RunTaskMessage发送给各个Mesos Slave；
+步骤7 Mesos Slave收到RunTaskMessage消息后，将之进一步发送给对应的ExecutorProcess；
+步骤8 ExecutorProcess收到消息后，进行资源本地化，并准备任务运行环境，最终调用用户编写的Executor中的launchTask启动任务（如果Executor尚未启动，则先要启动Executor）。
+*/
+
+
+//SchedulerProcess线程对应MesosSchedulerDriver处理  ExecutorProcess线程对应MesosExecutorDriver处理
+//参考http://dongxicheng.org/apache-mesos/apache-mesos-task-assignment/
+
+//class MesosSchedulerDriver : public SchedulerDriver
 class SchedulerDriver
 {
 public:
@@ -342,7 +371,33 @@ public:
 // "MESOS_QUIET=1".
 //
 // See src/examples/test_framework.cpp for an example of using the
-// MesosSchedulerDriver.
+// MesosSchedulerDriver.   
+
+/*  
+ Framework注册过程: http://dongxicheng.org/apache-mesos/apache-mesos-framework-executor-registering/
+（1） JobTracker启动时，会调用MesosScheduler的start()方法
+（2） MesosScheduler的start()方法创建一个MesosSchedulerDriver对象，并将自己作为参数传入该对象。
+（3） MesosSchedulerDriver初始化，创建一个SchedulerProcess对象
+（4） MesosSchedulerDriver初始化，调用MasterDetector::create()，它将向SchedulerProcess对象发送一个NewMasterDetectedMessage消息
+（5） SchedulerProcess对象收到NewMasterDetectedMessage消息后，向Master发送一个RegisterFrameworkMessage消息
+（6） Master收到该消息后，保存相关信息，并返回FrameworkRegistedMessage消息，确认framework注册成功
+
+
+
+Apache Mesos的任务分配过程: http://dongxicheng.org/apache-mesos/apache-mesos-task-assignment/
+步骤1 当出现以下几种事件中的一种时，会触发资源分配行为：新框架注册、框架注销、增加节点、出现空闲资源等；
+步骤2 Mesos Master中的Allocator模块为某个框架分配资源，并将资源封装到ResourceOffersMessage（Protocal Buffer Message）中，SchedulerProcess通过网络传输给用户；
+步骤3 SchedulerProcess调用用户编写的Scheduler中的resourceOffers函数（不能版本可能有变动），告之有新资源可用；
+步骤4 用户的Scheduler调用MesosSchedulerDriver中的launchTasks()函数，告之将要启动的任务；
+步骤5 SchedulerProcess将待启动的任务封装到LaunchTasksMessage（Protocal Buffer Message）中，通过网络传输给Mesos Master；
+步骤6 Mesos Master将待启动的任务封装成RunTaskMessage发送给各个Mesos Slave；
+步骤7 Mesos Slave收到RunTaskMessage消息后，将之进一步发送给对应的ExecutorProcess；
+步骤8 ExecutorProcess收到消息后，进行资源本地化，并准备任务运行环境，最终调用用户编写的Executor中的launchTask启动任务（如果Executor尚未启动，则先要启动Executor）。
+*/
+
+
+//SchedulerProcess线程对应MesosSchedulerDriver处理  ExecutorProcess线程对应MesosExecutorDriver处理
+//参考http://dongxicheng.org/apache-mesos/apache-mesos-task-assignment/
 class MesosSchedulerDriver : public SchedulerDriver
 {
 public:

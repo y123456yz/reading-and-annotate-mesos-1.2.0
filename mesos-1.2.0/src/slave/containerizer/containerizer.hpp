@@ -51,8 +51,8 @@ struct SlaveState;
 
 
 // An abstraction of a Containerizer that will contain an executor and
-// its tasks.
-class Containerizer
+// its tasks.  src/slave/slave.hppÖÐ°üº¬Containerizer* containerizer
+class Containerizer //ÊôÓÚnamespace   mesos.internal.slave
 {
 public:
   // Attempts to create a containerizer as specified by 'isolation' in
@@ -158,3 +158,5 @@ public:
 } // namespace mesos {
 
 #endif // __CONTAINERIZER_HPP__
+
+

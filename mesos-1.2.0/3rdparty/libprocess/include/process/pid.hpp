@@ -36,7 +36,7 @@ class ProcessBase;
  *
  * @see process::PID
  */
-struct UPID
+struct UPID //打印获取UPID参考pid.getOrElse(UPID()   pid.get()打印输出，见Slave::executorMessage
 {
   UPID() = default;
 

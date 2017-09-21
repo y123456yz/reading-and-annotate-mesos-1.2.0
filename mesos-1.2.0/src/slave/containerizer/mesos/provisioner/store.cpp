@@ -38,9 +38,12 @@ namespace slave {
 
 Try<hashmap<Image::Type, Owned<Store>>> Store::create(const Flags& flags)
 {
+  
   if (flags.image_providers.isNone()) {
     return hashmap<Image::Type, Owned<Store>>();
   }
+
+  //LOG(INFO) << "yang test image_providers:" << flags.image_providers;
 
   hashmap<Image::Type, Try<Owned<Store>>(*)(const Flags&)> creators;
   creators.put(Image::APPC, &appc::Store::create);

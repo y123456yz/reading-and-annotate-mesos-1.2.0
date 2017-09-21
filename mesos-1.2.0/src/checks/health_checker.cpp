@@ -393,7 +393,7 @@ Future<Nothing> HealthCheckerProcess::commandHealthCheck()
 
       if (commandPid != -1) {
         // Cleanup the external command process.
-        VLOG(1) << "Killing the command health check process " << commandPid;
+        LOG(INFO) << "Killing the command health check process " << commandPid;
 
         os::killtree(commandPid, SIGKILL);
       }
@@ -476,7 +476,7 @@ Future<Nothing> HealthCheckerProcess::httpHealthCheck()
 
       if (curlPid != -1) {
         // Cleanup the HTTP_CHECK_COMMAND process.
-        VLOG(1) << "Killing the HTTP health check process " << curlPid;
+        LOG(INFO) << "Killing the HTTP health check process " << curlPid;
 
         os::killtree(curlPid, SIGKILL);
       }
@@ -602,7 +602,7 @@ Future<Nothing> HealthCheckerProcess::tcpHealthCheck()
 
       if (tcpConnectPid != -1) {
         // Cleanup the TCP_CHECK_COMMAND process.
-        VLOG(1) << "Killing the TCP health check process " << tcpConnectPid;
+        LOG(INFO) << "Killing the TCP health check process " << tcpConnectPid;
 
         os::killtree(tcpConnectPid, SIGKILL);
       }

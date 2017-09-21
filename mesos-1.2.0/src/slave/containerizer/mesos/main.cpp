@@ -28,7 +28,7 @@
 
 using namespace mesos::internal::slave;
 
-
+//mesos-slave的src/slave main.c函数   mesos-containerizer的main函数在src/slave/containerizer/mesos/main.cpp
 int main(int argc, char** argv)
 {
 #ifdef __WINDOWS__
@@ -38,6 +38,15 @@ int main(int argc, char** argv)
   }
 #endif // __WINDOWS__
 
+  /*
+  [root@localhost src]# ./mesos-containerizer launch
+  yang test ............... main
+  WARNING: Logging before InitGoogleLogging() is written to STDERR
+  I0810 17:28:00.322547 16996 launch.cpp:243] MesosContainerizerLaunch::execute
+  I0810 17:28:00.322774 16996 launch.cpp:171] installSignalHandlers
+  installSignalHandlersFlag --launch_info is not specified
+  */
+  printf("yang test ............... main\r\n");
 #ifdef __linux__
   int success = Subcommand::dispatch(
       "MESOS_CONTAINERIZER_",

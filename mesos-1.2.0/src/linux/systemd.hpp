@@ -38,6 +38,7 @@ namespace mesos {
  * components of the executor.
  */
 // TODO(jmlvanre): We may want to allow this to be configured.
+//创建在systemd.initialize   生效见extendLifetime
 static const char MESOS_EXECUTORS_SLICE[] = "mesos_executors.slice";
 
 
@@ -60,7 +61,11 @@ class Flags : public virtual flags::FlagsBase
 {
 public:
   Flags();
-
+  /*
+	systemdFlags.enabled = flags.systemd_enable_support;
+    systemdFlags.runtime_directory = flags.systemd_runtime_directory;
+    systemdFlags.cgroups_hierarchy = flags.cgroups_hierarchy;
+  */ //赋值见 slave main.cpp
   bool enabled;
   std::string runtime_directory;
   std::string cgroups_hierarchy;

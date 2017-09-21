@@ -197,6 +197,7 @@ void Slave::signaled(int signal, int uid)
 {
   if (signal == SIGUSR1) {
     Result<string> user = os::user(uid);
+	LOG(INFO) << "SHUT DOWN signaled";
 
     shutdown(
         UPID(),
@@ -205,7 +206,7 @@ void Slave::signaled(int signal, int uid)
   }
 }
 
-
+//slave初始化
 void Slave::initialize()
 {
   LOG(INFO) << "Mesos agent started on " << string(self()).substr(5);
@@ -399,6 +400,7 @@ void Slave::initialize()
       << " for --gc_disk_headroom. Must be between 0.0 and 1.0";
   }
 
+  //初始化资源预估器
   Try<Nothing> initialize =
     resourceEstimator->initialize(defer(self(), &Self::usage));
 
@@ -423,7 +425,7 @@ void Slave::initialize()
     EXIT(EXIT_FAILURE)
       << "Failed to determine agent resources: " << resources.error();
   }
-
+  
   // Ensure disk `source`s are accessible.
   foreach (
       const Resource& resource,
@@ -498,6 +500,7 @@ void Slave::initialize()
     }
   }
 
+  //初始化attributes
   Attributes attributes;
   if (flags.attributes.isSome()) {
     attributes = Attributes::parse(flags.attributes.get());
@@ -524,7 +527,7 @@ void Slave::initialize()
     hostname = flags.hostname.get();
   }
 
-  // Initialize slave info.
+  // Initialize slave info. 
   info.set_hostname(hostname);
   info.set_port(self().address.port);
 
@@ -553,6 +556,7 @@ void Slave::initialize()
 
   LOG(INFO) << "Agent hostname: " << info.hostname();
 
+  //初始化statusUpdateManager
   statusUpdateManager->initialize(defer(self(), &Slave::forward, lambda::_1)
     .operator std::function<void(StatusUpdate)>());
 
@@ -569,18 +573,31 @@ void Slave::initialize()
 
   startTime = Clock::now();
 
+  /*
+    注册一系列处理函数。
+  */
+  //http://dongxicheng.org/apache-mesos/apache-mesos-communications/
+   //scheduler的消息类型及处理函数(SchedulerProcess::initialize)
+  //Executor的消息类型及处理函数(ExecutorProcess)
+  // Mesos-Slave的消息类型及处理函数(Slave::initialize)
+  // Mesos-master的消息类型及处理函数(Master::initialize)
+  
   // Install protobuf handlers.
+  //对于Slave注册成功的消息
   install<SlaveRegisteredMessage>(
       &Slave::registered,
       &SlaveRegisteredMessage::slave_id,
-      &SlaveRegisteredMessage::connection);
+      &SlaveRegisteredMessage::connection);//对于Slave注册成功的消息
 
-  install<SlaveReregisteredMessage>(
+  
+  install<SlaveReregisteredMessage>(  //slave重新向master注册的报文
       &Slave::reregistered,
       &SlaveReregisteredMessage::slave_id,
       &SlaveReregisteredMessage::reconciliations,
       &SlaveReregisteredMessage::connection);
 
+  
+  //对于运行一个Task的消息。
   install<RunTaskMessage>(
       &Slave::runTask,
       &RunTaskMessage::framework,
@@ -629,6 +646,7 @@ void Slave::initialize()
       &StatusUpdateAcknowledgementMessage::task_id,
       &StatusUpdateAcknowledgementMessage::uuid);
 
+  //对于注册上来的一个Executor的消息
   install<RegisterExecutorMessage>(
       &Slave::registerExecutor,
       &RegisterExecutorMessage::framework_id,
@@ -641,6 +659,7 @@ void Slave::initialize()
       &ReregisterExecutorMessage::tasks,
       &ReregisterExecutorMessage::updates);
 
+  //StatusUpdate的消息
   install<StatusUpdateMessage>(
       &Slave::statusUpdate,
       &StatusUpdateMessage::update,
@@ -834,6 +853,8 @@ void Slave::finalize()
 
 void Slave::shutdown(const UPID& from, const string& message)
 {
+   LOG(INFO) << "SHUT DOWN shutdown";
+
   if (from && master != from) {
     LOG(WARNING) << "Ignoring shutdown message from " << from
                  << " because it is not from the registered master: "
@@ -1209,7 +1230,7 @@ void Slave::registered(
   }
 }
 
-
+//slave重新向master注册的报文回调
 void Slave::reregistered(
     const UPID& from,
     const SlaveID& slaveId,
@@ -1533,6 +1554,21 @@ Future<bool> Slave::unschedule(const string& path)
 
 // TODO(vinod): Instead of crashing the slave on checkpoint errors,
 // send TASK_LOST to the framework.
+
+/*
+  Executor注册过程  http://dongxicheng.org/apache-mesos/apache-mesos-framework-executor-registering/
+本节描述框架frameworkX在某个slaveX上注册executor executorX的过程：
+（1）Master第一次向slaveX发送执行frameworkX中task的消息 RunTaskMessage
+（2）slave收到该消息后，运行相应的消息处理函数runTask()
+（3）该函数发现该slave上未启动frameworkX对应的executorX，则调用IsolationModule的lauchExecutor()函数
+（4）该函数创建一个FrameworkExecutor对象，并调用ExecutorProcess的Initialize()函数进行初始化，同时启动TaskTracker
+（5）Initialize()函数创建消息RegisterExecutorMessage，并发送给slave
+（6）Slave收到该消息后，调用对象的消息处理函数registerExecutor，该函数创建ExecutorRegisteredMessage消息，返回给ExecutorProcess
+（7）ExecutorProcess收到该消息后，调用对应的消息处理函数registered()，该函数再进一步调用FrameworkExecutor的registered()函数
+*/
+
+//消息参考 http://dongxicheng.org/apache-mesos/apache-mesos-communications/
+//Mesos-Slave的初始化中，Mesos-Slave接收到RunTaskMessage或者其他消息，会调用Slave::runTask.
 void Slave::runTask(
     const UPID& from,
     const FrameworkInfo& frameworkInfo,
@@ -1558,7 +1594,7 @@ void Slave::runTask(
   run(frameworkInfo, executorInfo, task, None(), pid);
 }
 
-
+//Slave::runTask->Slave::run->Slave::_run->Framework::launchExecutor
 void Slave::run(
     const FrameworkInfo& frameworkInfo,
     ExecutorInfo executorInfo,
@@ -1750,6 +1786,7 @@ void Slave::run(
   }
 
   // Run the task after the unschedules are done.
+  //执行对应的task,主要是_run函数功能，对应下面的Slave::_run  //Slave::run->Slave::_run
   unschedule.onAny(defer(
       self(),
       &Self::_run,
@@ -1760,7 +1797,7 @@ void Slave::run(
       taskGroup));
 }
 
-
+//Slave::runTask->Slave::run->Slave::_run->Framework::launchExecutor
 void Slave::_run(
     const Future<bool>& future,
     const FrameworkInfo& frameworkInfo,
@@ -2051,6 +2088,7 @@ void Slave::_run(
   Executor* executor = framework->getExecutor(executorId);
 
   if (executor == nullptr) {
+  	//Slave::run->Slave::_run->Framework::launchExecutor
     executor = framework->launchExecutor(
         executorInfo,
         taskGroup.isNone() ? task.get() : Option<TaskInfo>::none());
@@ -3468,7 +3506,7 @@ void Slave::registerExecutor(
             executor->id,
             executor->containerId);
 
-        VLOG(1) << "Checkpointing executor pid '"
+        LOG(INFO) << "Checkpointing executor pid '"
                 << executor->pid.get() << "' to '" << path << "'";
         CHECK_SOME(state::checkpoint(path, executor->pid.get()));
       }
@@ -4368,7 +4406,7 @@ void Slave::ping(const UPID& from, bool connected)
   send(from, PongSlaveMessage());
 }
 
-
+//定期发送PING信息，超时走到这里，见
 void Slave::pingTimeout(Future<Option<MasterInfo>> future)
 {
   // It's possible that a new ping arrived since the timeout fired
@@ -5264,7 +5302,7 @@ void Slave::_checkDiskUsage(const Future<double>& usage)
                << (usage.isFailed() ? usage.failure() : "future discarded");
   } else {
     executorDirectoryMaxAllowedAge = age(usage.get());
-    LOG(INFO) << "Current disk usage " << std::setiosflags(std::ios::fixed)
+    LOG(INFO) << "Current disk usage  8.10 12:15" << std::setiosflags(std::ios::fixed)
               << std::setprecision(2) << 100 * usage.get() << "%."
               << " Max allowed age: " << executorDirectoryMaxAllowedAge;
 
@@ -5277,7 +5315,9 @@ void Slave::_checkDiskUsage(const Future<double>& usage)
   delay(flags.disk_watch_interval, self(), &Slave::checkDiskUsage);
 }
 
+//从/work-mesos中恢复framework信息    Slave::initialize中最末尾执行
 
+//检查slave路径meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0是否存在，存在则删除,然后recoverFramework重新构建
 Future<Nothing> Slave::recover(const Try<state::State>& state)
 {
   if (state.isError()) {
@@ -5447,10 +5487,13 @@ Future<Nothing> Slave::recover(const Try<state::State>& state)
 
     // TODO(bernd-mesos): Make this an instance method call, see comment
     // in "fetcher.hpp"".
+    //检查slave路径meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0是否存在，存在则删除
     Try<Nothing> recovered = Fetcher::recover(slaveState.get().id, flags);
-    if (recovered.isError()) {
+    if (recovered.isError()) { 
       return Failure(recovered.error());
     }
+
+	//Fetcher::recover 先删除，下面的recoverFramework从新构建
 
     // Recover the frameworks.
     foreachvalue (const FrameworkState& frameworkState,
@@ -5640,8 +5683,23 @@ void Slave::__recover(const Future<Nothing>& future)
   recoveryInfo.recovered.set(Nothing()); // Signal recovery.
 }
 
+/*
+mesos checkpoint是什么？
+背景
+Agent recovery过程是mesos的一个比较重要的过程，其中牵涉了很多东西，checkpoint就是其中之一。
+为了更好的研究 Agent Recovery, 先来研究一下checkpoint。
 
-void Slave::recoverFramework(const FrameworkState& state)
+线索
+  // If set, framework pid, executor pids and status updates are
+  // checkpointed to disk by the slaves. Checkpointing allows a
+  // restarted slave to reconnect with old executors and recover
+  // status updates, at the cost of disk I/O.
+  optional bool checkpoint = 5 [default = false];
+从上面的注释可以看出，checkpoint促使agent保存framework pid、executor pids和status updates。
+那么在agent recovery的时候， 会用到以上几种持久化的数据。
+*/
+//参考http://ivanjobs.github.io/2016/08/15/what-is-mesos-checkpoint/
+void Slave::recoverFramework(const FrameworkState& state) //Slave::recover中调用
 {
   LOG(INFO) << "Recovering framework " << state.id;
 
@@ -5667,6 +5725,7 @@ void Slave::recoverFramework(const FrameworkState& state)
   // and rewrite the new format when we are done.
   bool recheckpoint = false;
   if (!frameworkInfo.has_id()) {
+  	//
     frameworkInfo.mutable_id()->CopyFrom(state.id);
     recheckpoint = true;
   }
@@ -5689,12 +5748,14 @@ void Slave::recoverFramework(const FrameworkState& state)
 
   frameworks[framework->id()] = framework;
 
-  if (recheckpoint) {
+  if (recheckpoint) { //创建相应的framework路径及framework.pid文件并写入内容
     framework->checkpointFramework();
   }
 
-  // Now recover the executors for this framework.
+   
+  // Now recover the executors for this framework.   recover恢复所有的executor
   foreachvalue (const ExecutorState& executorState, state.executors) {
+    //根据Framework获取信息Executor 然后存入executors
     framework->recoverExecutor(executorState);
   }
 
@@ -5830,14 +5891,14 @@ void Slave::_qosCorrections(const Future<list<QoSCorrection>>& future)
 
   const list<QoSCorrection>& corrections = future.get();
 
-  VLOG(1) << "Received " << corrections.size() << " QoS corrections";
+  LOG(INFO) << "Received " << corrections.size() << " QoS corrections";
 
   foreach (const QoSCorrection& correction, corrections) {
     // TODO(nnielsen): Print correction, once the operator overload
     // for QoSCorrection has been implemented.
     if (correction.type() == QoSCorrection::KILL) {
       const QoSCorrection::Kill& kill = correction.kill();
-
+      LOG(INFO) << "Ignoring QoS correction KILL ";
       if (!kill.has_framework_id()) {
         LOG(WARNING) << "Ignoring QoS correction KILL: "
                      << "framework id not specified.";
@@ -6378,13 +6439,17 @@ Framework::Framework(
     completedExecutors(slaveFlags.max_completed_executors_per_framework) {}
 
 
+//创建相应的framework路径及framework.pid文件并写入内容
+
+//Slave::recoverFramework中调用
 void Framework::checkpointFramework() const
 {
   // Checkpoint the framework info.
+  //meta/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S1/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1
   string path = paths::getFrameworkInfoPath(
       slave->metaDir, slave->info.id(), id());
 
-  VLOG(1) << "Checkpointing FrameworkInfo to '" << path << "'";
+  LOG(INFO) << "Checkpointing FrameworkInfo to '" << path << "'";
 
   CHECK_SOME(state::checkpoint(path, info));
 
@@ -6394,8 +6459,9 @@ void Framework::checkpointFramework() const
   // error.
   path = paths::getFrameworkPidPath(
       slave->metaDir, slave->info.id(), id());
+//  /data1/mesos/meta/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S1/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/framework.pid
 
-  VLOG(1) << "Checkpointing framework pid"
+  LOG(INFO) << "Checkpointing framework pid"
           << " '" << pid.getOrElse(UPID()) << "'"
           << " to '" << path << "'";
 
@@ -6411,7 +6477,8 @@ Framework::~Framework()
   }
 }
 
-
+//Slave::run->Slave::_run->Framework::launchExecutor
+//Slave::runTask->Slave::run->Slave::_run->Framework::launchExecutor->MesosContainerizer::launch
 // Create and launch an executor.
 Executor* Framework::launchExecutor(
     const ExecutorInfo& executorInfo,
@@ -6449,6 +6516,7 @@ Executor* Framework::launchExecutor(
     }
   }
 #endif // __WINDOWS__
+  //创建目录:/work-mesos/slaves/6f7a4b18-4c38-4bf6-8d89-5d47835ce694-S0/frameworks/6f7a4b18-4c38-4bf6-8d89-5d47835ce694-0000/executors/default/runs/d42c083b-3809-4633-bf95-e6506484bc7f
 
   // Create a directory for the executor.
   const string directory = paths::createExecutorDirectory(
@@ -6477,6 +6545,11 @@ Executor* Framework::launchExecutor(
 
   executors[executorInfo.executor_id()] = executor;
 
+  /*
+  Launching executor 'default' of framework 6f7a4b18-4c38-4bf6-8d89-5d47835ce694-0000 with resources {} 
+  in work directory './work-mesos/slaves/6f7a4b18-4c38-4bf6-8d89-5d47835ce694-S0/frameworks/
+  6f7a4b18-4c38-4bf6-8d89-5d47835ce694-0000/executors/default/runs/d42c083b-3809-4633-bf95-e6506484bc7f'
+  */
   LOG(INFO) << "Launching executor '" << executorInfo.executor_id()
             << "' of framework " << id()
             << " with resources " << executorInfo.resources()
@@ -6535,14 +6608,18 @@ Executor* Framework::launchExecutor(
       slave->self(),
       info.checkpoint());
 
+  /*
+  最终会调用containerizer->launch。
+  这里的containerizer是指ComposingContainerizer。
+  */
   // Launch the container.
   Future<bool> launch;
   if (!executor->isCommandExecutor()) {
     // If the executor is _not_ a command executor, this means that
     // the task will include the executor to run. The actual task to
     // run will be enqueued and subsequently handled by the executor
-    // when it has registered to the slave.
-    launch = slave->containerizer->launch(
+    // when it has registered to the slave.  调用MesosContainerizerProcess::launch
+    launch = slave->containerizer->launch( 
         containerId,
         None(),
         executorInfo_,
@@ -6559,7 +6636,8 @@ Executor* Framework::launchExecutor(
     // containerizer how to execute those tasks and the generated
     // executor info works as a placeholder.
     // TODO(nnielsen): Obsolete the requirement for executors to run
-    // one-off tasks.
+    // one-off tasks. 调用MesosContainerizer::launch
+    
     launch = slave->containerizer->launch(
         containerId,
         taskInfo,
@@ -6644,7 +6722,7 @@ Executor* Slave::getExecutor(const ContainerID& containerId) const
   return nullptr;
 }
 
-
+//根据Framework获取信息Executor 然后存入executors
 void Framework::recoverExecutor(const ExecutorState& state)
 {
   LOG(INFO) << "Recovering executor '" << state.id
@@ -6706,6 +6784,8 @@ void Framework::recoverExecutor(const ExecutorState& state)
   const string directory = paths::getExecutorRunPath(
       slave->flags.work_dir, slave->info.id(), id(), state.id, latest);
 
+  LOG(INFO) << "executor run path:" << directory;
+  
   Executor* executor = new Executor(
       slave,
       id(),
@@ -6880,7 +6960,7 @@ Task* Executor::addTask(const TaskInfo& task)
 
 void Executor::completeTask(const TaskID& taskId)
 {
-  VLOG(1) << "Completing task " << taskId;
+  LOG(INFO) << "Completing task " << taskId;
 
   CHECK(terminatedTasks.contains(taskId))
     << "Failed to find terminated task " << taskId;
@@ -7120,7 +7200,7 @@ Option<TaskGroupInfo> Executor::getQueuedTaskGroup(const TaskID& taskId)
   return None();
 }
 
-
+//Framework::launchExecutor中会执行
 map<string, string> executorEnvironment(
     const Flags& flags,
     const ExecutorInfo& executorInfo,

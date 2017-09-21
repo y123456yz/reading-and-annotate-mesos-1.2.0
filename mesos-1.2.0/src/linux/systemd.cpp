@@ -69,8 +69,9 @@ const Flags& flags()
 
 namespace mesos {
 
+//LinuxLauncherProcess::fork中会调用该函数功能
 // NOTE: Returning an Error implies the child process will be killed.
-Try<Nothing> extendLifetime(pid_t child)
+Try<Nothing> extendLifetime(pid_t child)  //把child加入MESOS_EXECUTORS_SLICE
 {
   if (!systemd::exists()) {
     return Error("Failed to contain process on systemd: "
@@ -102,8 +103,9 @@ Try<Nothing> extendLifetime(pid_t child)
 } // namespace mesos {
 
 
+//slave中的main.cpp中会调用这里
 Try<Nothing> initialize(const Flags& flags)
-{
+{ //slice可以参考http://www.ruanyifeng.com/blog/2016/03/systemd-tutorial-commands.html
   static Once* initialized = new Once();
 
   if (initialized->once()) {

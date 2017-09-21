@@ -122,7 +122,7 @@ inline Try<Nothing> checkpoint(
 // NOTE: We provide atomic (all-or-nothing) semantics here by always
 // writing to a temporary file first then using os::rename to atomically
 // move it to the desired path.
-template <typename T>
+template <typename T>  //创建path路径文件，并把t内容写进去
 Try<Nothing> checkpoint(const std::string& path, const T& t)
 {
   // Create the base directory.
@@ -167,14 +167,17 @@ Try<Nothing> checkpoint(const std::string& path, const T& t)
   return Nothing();
 }
 
+/*
+/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG13/runs/504c029f-5aff-4013-ba75-4104707b9ef3
+*/
 
 // NOTE: The *State structs (e.g., TaskState, RunState, etc) are
 // defined in reverse dependency order because many of them have
 // Option<*State> dependencies which means we need them declared in
 // their entirety in order to compile because things like
 // Option<*State> need to know the final size of the types.
-
-struct TaskState
+ //mesos-agent重启的时候从meta路径恢复，赋值见TaskState::recover
+struct TaskState //recover executor tasks见Executor::recoverTask
 {
   TaskState() : errors(0) {}
 
@@ -187,15 +190,15 @@ struct TaskState
       const TaskID& taskId,
       bool strict);
 
-  TaskID id;
-  Option<Task> info;
-  std::vector<StatusUpdate> updates;
+  TaskID id;//mesos-agent重启的时候从meta路径恢复，赋值见TaskState::recover
+  Option<Task> info;//mesos-agent重启的时候从meta路径恢复，赋值见TaskState::recover
+  std::vector<StatusUpdate> updates;//mesos-agent重启的时候从meta路径恢复，赋值见TaskState::recover
   hashset<UUID> acks;
   unsigned int errors;
 };
 
-
-struct RunState
+//mesos-agent重启的时候从meta路径恢复，赋值见RunState::recover
+struct RunState  //recover executor见Framework::recoverExecutor
 {
   RunState() : completed(false), errors(0) {}
 
@@ -207,10 +210,10 @@ struct RunState
       const ContainerID& containerId,
       bool strict);
 
-  Option<ContainerID> id;
-  hashmap<TaskID, TaskState> tasks;
-  Option<pid_t> forkedPid;
-  Option<process::UPID> libprocessPid;
+  Option<ContainerID> id;//mesos-agent重启的时候从meta路径恢复，赋值见RunState::recover
+  hashmap<TaskID, TaskState> tasks;//mesos-agent重启的时候从meta路径恢复，赋值见RunState::recover
+  Option<pid_t> forkedPid;//mesos-agent重启的时候从meta路径恢复，赋值见RunState::recover
+  Option<process::UPID> libprocessPid;//mesos-agent重启的时候从meta路径恢复，赋值见RunState::recover
 
   // This represents if the executor is connected via HTTP. It can be None()
   // when the connection type is unknown.
@@ -223,7 +226,8 @@ struct RunState
 };
 
 
-struct ExecutorState
+//mesos-agent重启的时候从meta路径恢复，赋值见ExecutorState::recover
+struct ExecutorState  //下面的FrameworkState包含该类  //recover executor见Framework::recoverExecutor
 {
   ExecutorState() : errors(0) {}
 
@@ -234,15 +238,16 @@ struct ExecutorState
       const ExecutorID& executorId,
       bool strict);
 
-  ExecutorID id;
-  Option<ExecutorInfo> info;
-  Option<ContainerID> latest;
+  ExecutorID id;//mesos-agent重启的时候从meta路径恢复，赋值见ExecutorState::recover
+  Option<ExecutorInfo> info; //mesos-agent重启的时候从meta路径恢复，赋值见ExecutorState::recover
+  Option<ContainerID> latest; //mesos-agent重启的时候从meta路径恢复，赋值见ExecutorState::recover
+  //mesos-agent重启的时候从meta路径恢复，赋值见ExecutorState::recover
   hashmap<ContainerID, RunState> runs;
   unsigned int errors;
 };
 
-
-struct FrameworkState
+//recover executor见Framework::recoverExecutor
+struct FrameworkState //mesos-agent重启的时候从meta路径恢复，赋值见FrameworkState::recover
 {
   FrameworkState() : errors(0) {}
 
@@ -252,19 +257,20 @@ struct FrameworkState
       const FrameworkID& frameworkId,
       bool strict);
 
-  FrameworkID id;
-  Option<FrameworkInfo> info;
+  FrameworkID id;  //mesos-agent重启的时候从meta路径恢复，赋值见FrameworkState::recover
+  Option<FrameworkInfo> info;  //mesos-agent重启的时候从meta路径恢复，赋值见FrameworkState::recover
 
   // Note that HTTP frameworks (supported in 0.24.0) do not have a
   // PID, in which case 'pid' is Some(UPID()) rather than None().
   Option<process::UPID> pid;
-
+  
+  //mesos-agent重启的时候从meta路径恢复，赋值见FrameworkState::recover
   hashmap<ExecutorID, ExecutorState> executors;
   unsigned int errors;
 };
 
-
-struct ResourcesState
+//下面的struct State中的resources成员为改类结构
+struct ResourcesState  
 {
   ResourcesState() : errors(0) {}
 
@@ -282,8 +288,8 @@ struct ResourcesState
   unsigned int errors;
 };
 
-
-struct SlaveState
+//下面的struct State中的slave成员为改类结构
+struct SlaveState  //成员赋值是在mesos-slave起来的时候，从meta路径获取，见SlaveState::recover
 {
   SlaveState() : errors(0) {}
 
@@ -292,21 +298,26 @@ struct SlaveState
       const SlaveID& slaveId,
       bool strict);
 
-  SlaveID id;
-  Option<SlaveInfo> info;
+  SlaveID id; //成员赋值是在mesos-slave起来的时候，从meta路径获取，见SlaveState::recover
+  //成员赋值是在mesos-slave起来的时候，从meta路径获取，见SlaveState::recover
+  Option<SlaveInfo> info; 
+  //成员赋值是在mesos-slave起来的时候，从meta路径获取，见SlaveState::recover
   hashmap<FrameworkID, FrameworkState> frameworks;
+  //成员赋值是在mesos-slave起来的时候，从meta路径获取，见SlaveState::recover
   unsigned int errors;
 };
 
 
 // The top level state. The members are child nodes in the tree. Each
 // child node (recursively) recovers the checkpointed state.
-struct State
+struct State //赋值见Try<State> recover  //从 work-mesos/meta/slaves/latest中恢复获取， 使用见Slave::recover
 {
   State() : errors(0) {}
 
-  Option<ResourcesState> resources;
-  Option<SlaveState> slave;
+  //赋值见Try<State> recover
+  Option<ResourcesState> resources;    //从 meta/resources/resources.info文件获取，没有则为空
+  //从 work-mesos/meta/slaves/latest中恢复获取
+  Option<SlaveState> slave;  //赋值见Try<State> recover
 
   // TODO(jieyu): Consider using a vector of Option<Error> here so
   // that we can print all the errors. This also applies to all the

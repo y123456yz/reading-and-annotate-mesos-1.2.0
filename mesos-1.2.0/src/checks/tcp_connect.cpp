@@ -103,7 +103,7 @@ int testTCPConnect(const string& ip, int port)
     return EXIT_FAILURE;
   }
 
-  cout << "Successfully established TCP connection" << endl;
+  LOG(INFO)  << "Successfully established TCP connection" ;
 
   shutdown(socket, SHUT_RDWR);
   close(socket);

@@ -1,0 +1,154 @@
+root@fd-mesos-master04.gz01:~/yyz/mesos-1.2.0$ ./src/mesos-agent --master=100.90.207.13:8000 --log_dir=/var/log/mesos --default_role=* --hostname=fd-mesos-master04.gz01 --ip=100.90.208.12 --port=8000 --resources=file:///etc/mesos-slave/res/resource.json --work_dir=/data1/mesos
+WARNING: Logging before InitGoogleLogging() is written to STDERR
+I0815 10:38:32.796057 13529 main.cpp:243] Build: 2017-08-14 16:29:54 by root
+I0815 10:38:32.796175 13529 main.cpp:244] Version: 1.2.0
+I0815 10:38:32.800390 13529 logging.cpp:194] INFO level logging started!
+I0815 10:38:32.806299 13529 systemd.cpp:238] systemd version `219` detected
+I0815 10:38:32.806350 13529 main.cpp:342] Inializing systemd state
+I0815 10:38:32.817930 13529 systemd.cpp:326] Started systemd slice `mesos_executors.slice`
+I0815 10:38:32.819521 13529 containerizer.cpp:220] Using isolation: posix/cpu,posix/mem,filesystem/posix,network/cni
+I0815 10:38:32.825728 13529 linux_launcher.cpp:150] Using /sys/fs/cgroup/freezer as the freezer hierarchy for the Linux launcher
+I0815 10:38:32.826926 13529 provisioner.cpp:249] Using default backend 'copy'
+I0815 10:38:32.833235 13551 slave.cpp:211] Mesos agent started on (1)@100.90.208.12:8000
+I0815 10:38:32.833284 13551 slave.cpp:212] Flags at startup: --appc_simple_discovery_uri_prefix="http://" --appc_store_dir="/tmp/mesos/store/appc" --authenticate_http_readonly="false" --authenticate_http_readwrite="false" --authenticatee="crammd5" --authentication_backoff_factor="1secs" --authorizer="local" --cgroups_cpu_enable_pids_and_tids_count="false" --cgroups_enable_cfs="false" --cgroups_hierarchy="/sys/fs/cgroup" --cgroups_limit_swap="false" --cgroups_root="mesos" --container_disk_watch_interval="15secs" --containerizers="mesos" --default_role="*" --disk_watch_interval="1mins" --docker="docker" --docker_kill_orphans="true" --docker_registry="https://registry-1.docker.io" --docker_remove_delay="6hrs" --docker_socket="/var/run/docker.sock" --docker_stop_timeout="0ns" --docker_store_dir="/tmp/mesos/store/docker" --docker_volume_checkpoint_dir="/var/run/mesos/isolators/docker/volume" --enforce_container_disk_quota="false" --executor_registration_timeout="1mins" --executor_shutdown_grace_period="5secs" --fetcher_cache_dir="/tmp/mesos/fetch" --fetcher_cache_size="2GB" --frameworks_home="" --gc_delay="1weeks" --gc_disk_headroom="0.1" --hadoop_home="" --help="false" --hostname="fd-mesos-master04.gz01" --hostname_lookup="true" --http_authenticators="basic" --http_command_executor="false" --http_heartbeat_interval="30secs" --initialize_driver_logging="true" --isolation="posix/cpu,posix/mem" --launcher="linux" --launcher_dir="/usr/local/mesos-1.2-yyz/libexec/mesos" --log_dir="/var/log/mesos" --logbufsecs="0" --logging_level="INFO" --max_completed_executors_per_framework="150" --oversubscribed_resources_interval="15secs" --perf_duration="10secs" --perf_interval="1mins" --qos_correction_interval_min="0ns" --quiet="false" --recover="reconnect" --recovery_timeout="15mins" --registration_backoff_factor="1secs" --resources="[
+{
+          "name" : "disk",
+          "type" : "SCALAR",
+          "scalar" : { "value" : 655 }
+        },
+{
+          "name" : "mount",
+          "type" : "SCALAR",
+          "scalar" : { "value" : 10 }
+        }
+]
+" --revocable_cpu_low_priority="true" --runtime_dir="/var/run/mesos" --sandbox_directory="/mnt/mesos/sandbox" --strict="true" --switch_user="true" --systemd_enable_support="true" --systemd_runtime_directory="/run/systemd/system" --version="false" --work_dir="/data1/mesos"
+I0815 10:38:32.843322 13551 slave.cpp:541] Agent resources: disk(*):655; mount(*):10; cpus(*):24; mem(*):62879; ports(*):[31000-32000]
+I0815 10:38:32.843431 13551 slave.cpp:549] Agent attributes: [  ]
+I0815 10:38:32.843535 13551 slave.cpp:554] Agent hostname: fd-mesos-master04.gz01
+I0815 10:38:32.843763 13562 status_update_manager.cpp:177] Pausing sending status updates
+I0815 10:38:32.848958 13555 state.cpp:62] Recovering state from '/data1/mesos/meta'
+I0815 10:38:32.849030 13555 state.cpp:706] No committed checkpointed resources found at '/data1/mesos/meta/resources/resources.info'
+I0815 10:38:32.887831 13546 slave.cpp:5646] Recovering framework OCEANBANK_FRAMEWORK_VERSION_1.1
+I0815 10:38:32.888070 13546 slave.cpp:6650] Recovering executor 'container_executor_testG13' of framework OCEANBANK_FRAMEWORK_VERSION_1.1
+I0815 10:38:32.888259 13561 gc.cpp:55] Scheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG13/runs/2d92d8f4-b1f0-4502-8626-93b99bd3eb79' for gc 3.17926055336593days in the future
+I0815 10:38:32.888546 13561 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG13/runs/2d92d8f4-b1f0-4502-8626-93b99bd3eb79' for gc 3.17926055243259days in the future
+I0815 10:38:32.888650 13561 gc.cpp:55] Scheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG13/runs/24b475a2-3cd8-4570-ad59-e9569383092d' for gc 3.21024434822815days in the future
+I0815 10:38:32.888727 13561 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG13/runs/24b475a2-3cd8-4570-ad59-e9569383092d' for gc 3.21024434777778days in the future
+I0815 10:38:32.888804 13561 gc.cpp:55] Scheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG13/runs/56cc05cd-37e3-4ca0-946a-86e04122031c' for gc 3.1649318473363days in the future
+I0815 10:38:32.888970 13561 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG13/runs/56cc05cd-37e3-4ca0-946a-86e04122031c' for gc 3.16493184698963days in the future
+I0815 10:38:32.889055 13561 gc.cpp:55] Scheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG13/runs/0cd566ba-ee3f-4163-b98e-868dd57e5596' for gc 2.19762860586667days in the future
+E0815 10:38:32.889101 13546 slave.cpp:7075] Unexpected terminal task state TASK_ERROR
+I0815 10:38:32.889164 13561 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG13/runs/0cd566ba-ee3f-4163-b98e-868dd57e5596' for gc 2.1976286055437days in the future
+I0815 10:38:32.890102 13563 gc.cpp:55] Scheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG13/runs/504c029f-5aff-4013-ba75-4104707b9ef3' for gc 3.25503599469926days in the future
+I0815 10:38:32.890247 13553 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG13/runs/504c029f-5aff-4013-ba75-4104707b9ef3' for gc 3.25503599314667days in the future
+I0815 10:38:32.890347 13553 gc.cpp:55] Scheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG13' for gc 3.25503599256889days in the future
+I0815 10:38:32.890414 13546 slave.cpp:6650] Recovering executor 'container_executor_testG12' of framework OCEANBANK_FRAMEWORK_VERSION_1.1
+I0815 10:38:32.890440 13553 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG13' for gc 3.25503599221037days in the future
+I0815 10:38:32.890847 13554 gc.cpp:55] Scheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG12/runs/63b806e6-0222-4645-8c63-2875466ff7fb' for gc 2.19762857861037days in the future
+I0815 10:38:32.890971 13554 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG12/runs/63b806e6-0222-4645-8c63-2875466ff7fb' for gc 2.1976285774637days in the future
+I0815 10:38:32.891006 13546 slave.cpp:6650] Recovering executor 'container_executor_testG9' of framework OCEANBANK_FRAMEWORK_VERSION_1.1
+I0815 10:38:32.891048 13554 gc.cpp:55] Scheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG12' for gc 2.19762857705778days in the future
+I0815 10:38:32.891139 13554 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG12' for gc 6.36113552122667days in the future
+I0815 10:38:32.891459 13548 gc.cpp:55] Scheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG9/runs/4fbeb358-479f-4d03-8853-3d434f26b2ac' for gc 1.98258227534519days in the future
+I0815 10:38:32.891580 13548 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG9/runs/4fbeb358-479f-4d03-8853-3d434f26b2ac' for gc 1.98258227414222days in the future
+I0815 10:38:32.891633 13546 slave.cpp:6650] Recovering executor 'container_executor_testGr100' of framework OCEANBANK_FRAMEWORK_VERSION_1.1
+I0815 10:38:32.891664 13548 gc.cpp:55] Scheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG9' for gc 1.9825822735763days in the future
+I0815 10:38:32.891748 13548 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testG9' for gc 1.98258227322963days in the future
+I0815 10:38:32.892611 13543 gc.cpp:55] Scheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testGr100/runs/eb9c828c-9d57-431d-a7e7-f687c1cce31e' for gc 1.98266328053333days in the future
+I0815 10:38:32.892702 13543 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testGr100/runs/eb9c828c-9d57-431d-a7e7-f687c1cce31e' for gc 1.98266327938667days in the future
+I0815 10:38:32.892774 13543 gc.cpp:55] Scheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testGr100' for gc 1.9826632789837days in the future
+I0815 10:38:32.892809 13546 slave.cpp:4957] Cleaning up framework OCEANBANK_FRAMEWORK_VERSION_1.1
+I0815 10:38:32.892848 13543 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/executors/container_executor_testGr100' for gc 1.98266327863407days in the future
+I0815 10:38:32.892973 13556 gc.cpp:55] Scheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1' for gc 6.99998966516148days in the future
+I0815 10:38:32.893059 13556 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1' for gc 6.99998966454815days in the future
+I0815 10:38:32.893108 13555 status_update_manager.cpp:285] Closing status update streams for framework OCEANBANK_FRAMEWORK_VERSION_1.1
+I0815 10:38:32.898568 13560 status_update_manager.cpp:203] Recovering status update manager
+I0815 10:38:32.898635 13560 status_update_manager.cpp:211] Recovering executor 'container_executor_testG13' of framework OCEANBANK_FRAMEWORK_VERSION_1.1
+I0815 10:38:32.898859 13560 status_update_manager.cpp:211] Recovering executor 'container_executor_testG12' of framework OCEANBANK_FRAMEWORK_VERSION_1.1
+I0815 10:38:32.898993 13560 status_update_manager.cpp:211] Recovering executor 'container_executor_testG9' of framework OCEANBANK_FRAMEWORK_VERSION_1.1
+I0815 10:38:32.899076 13560 status_update_manager.cpp:211] Recovering executor 'container_executor_testGr100' of framework OCEANBANK_FRAMEWORK_VERSION_1.1
+I0815 10:38:32.907816 13551 containerizer.cpp:599] Recovering containerizer
+I0815 10:38:32.912647 13552 provisioner.cpp:410] Provisioner recovery complete
+I0815 10:38:32.913028 13550 slave.cpp:5558] Finished recovery
+I0815 10:38:32.913310 13550 slave.cpp:5591] Garbage collecting old agent 0afc24d1-c1c7-459c-9b77-090e3038d1d2-S5
+I0815 10:38:32.913411 13550 slave.cpp:5591] Garbage collecting old agent ff6822fa-1ac1-4f87-aeae-30edac0f94be-S2
+I0815 10:38:32.913403 13566 gc.cpp:55] Scheduling '/data1/mesos/slaves/0afc24d1-c1c7-459c-9b77-090e3038d1d2-S5' for gc 6.99998942872593days in the future
+I0815 10:38:32.913498 13550 slave.cpp:5591] Garbage collecting old agent ff6822fa-1ac1-4f87-aeae-30edac0f94be-S3
+I0815 10:38:32.913506 13566 gc.cpp:55] Scheduling '/data1/mesos/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S2' for gc 6.99998942763852days in the future
+I0815 10:38:32.913590 13550 slave.cpp:5591] Garbage collecting old agent ff6822fa-1ac1-4f87-aeae-30edac0f94be-S4
+I0815 10:38:32.913604 13566 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S2' for gc 6.99998942726815days in the future
+I0815 10:38:32.913671 13550 slave.cpp:5591] Garbage collecting old agent ff6822fa-1ac1-4f87-aeae-30edac0f94be-S5
+I0815 10:38:32.913672 13566 gc.cpp:55] Scheduling '/data1/mesos/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S3' for gc 6.99998942667556days in the future
+I0815 10:38:32.913748 13566 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S3' for gc 6.99998942628444days in the future
+I0815 10:38:32.913805 13566 gc.cpp:55] Scheduling '/data1/mesos/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S4' for gc 6.99998942559111days in the future
+I0815 10:38:32.913862 13566 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S4' for gc 6.99998942526815days in the future
+I0815 10:38:32.913942 13566 gc.cpp:55] Scheduling '/data1/mesos/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S5' for gc 6.99998942468741days in the future
+I0815 10:38:32.914008 13566 gc.cpp:55] Scheduling '/data1/mesos/meta/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S5' for gc 6.9999894243763days in the future
+I0815 10:38:32.914510 13555 status_update_manager.cpp:177] Pausing sending status updates
+I0815 10:38:32.914541 13550 slave.cpp:931] New master detected at master@100.90.207.13:8000
+I0815 10:38:32.914592 13550 slave.cpp:955] No credentials provided. Attempting to register without authentication
+I0815 10:38:32.914657 13550 slave.cpp:966] Detecting new master
+I0815 10:38:33.697072 13566 slave.cpp:1242] Re-registered with master master@100.90.207.13:8000
+I0815 10:38:33.697186 13559 status_update_manager.cpp:184] Resuming sending status updates
+I0815 10:38:33.697224 13566 slave.cpp:1279] Forwarding total oversubscribed resources {}
+I0815 10:38:33.705143 13562 slave.cpp:1625] Got assigned task 'init_env.null.16' for framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:33.706506 13556 gc.cpp:83] Unscheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.2' from gc
+I0815 10:38:33.706769 13556 gc.cpp:83] Unscheduling '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.2/executors/container_executor_testLPL' from gc
+I0815 10:38:33.707110 13546 slave.cpp:1785] Launching task 'init_env.null.16' for framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:33.708899 13546 paths.cpp:547] Trying to chown '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.2/executors/container_executor_testLPL/runs/05838cd9-eb23-4acd-92fa-4352cc8718ab' to user 'root'
+I0815 10:38:33.709110 13546 slave.cpp:6480] Launching executor 'container_executor_testLPL' of framework OCEANBANK_FRAMEWORK_VERSION_1.2 with resources cpus(*)(allocated: *):0.5; mem(*)(allocated: *):128 in work directory '/data1/mesos/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.2/executors/container_executor_testLPL/runs/05838cd9-eb23-4acd-92fa-4352cc8718ab'
+I0815 10:38:33.709565 13549 containerizer.cpp:992] Starting container 05838cd9-eb23-4acd-92fa-4352cc8718ab for executor 'container_executor_testLPL' of framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:33.709844 13546 slave.cpp:2118] Queued task 'init_env.null.16' for executor 'container_executor_testLPL' of framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:33.716840 13563 linux_launcher.cpp:429] Launching container 05838cd9-eb23-4acd-92fa-4352cc8718ab and cloning with namespaces 
+I0815 10:38:33.719007 13563 systemd.cpp:96] Assigned child process '13602' to 'mesos_executors.slice' //到这里executor已经起起来了
+
+//executor开始发送registration报文
+I0815 10:38:35.411270 13550 slave.cpp:3385] Got registration for executor 'container_executor_testLPL' of framework OCEANBANK_FRAMEWORK_VERSION_1.2 from executor(1)@100.90.208.12:25523
+//mesos-slave开始通知executor执行task   task就是一个一个的任务，例如创建一个容器
+I0815 10:38:35.413993 13560 slave.cpp:2331] Sending queued task 'init_env.null.16' to executor 'container_executor_testLPL' of framework OCEANBANK_FRAMEWORK_VERSION_1.2 at executor(1)@100.90.208.12:25523
+
+//发送消息给scheduler
+I0815 10:38:40.382508 13554 slave.cpp:4324] Sending message for framework OCEANBANK_FRAMEWORK_VERSION_1.2 to scheduler-0e61dbf2-6c55-4387-a23c-8e94a534b37a@100.90.207.13:18805
+
+//task已经成功运行起来了
+I0815 10:38:40.383282 13554 slave.cpp:3816] Handling status update TASK_FINISHED (UUID: 6e23342d-35de-4420-bd74-f6aa0b1667f0) for task init_env.null.16 of framework OCEANBANK_FRAMEWORK_VERSION_1.2 from executor(1)@100.90.208.12:25523
+I0815 10:38:40.386838 13553 status_update_manager.cpp:323] Received status update TASK_FINISHED (UUID: 6e23342d-35de-4420-bd74-f6aa0b1667f0) for task init_env.null.16 of framework OCEANBANK_FRAMEWORK_VERSION_1.2
+
+//task成功处理的信息通知给master，master的ack通知给我们的executor进程   executor(1)@100.90.208.12:25523是我们的executor进程
+I0815 10:38:40.387667 13546 slave.cpp:4256] Forwarding the update TASK_FINISHED (UUID: 6e23342d-35de-4420-bd74-f6aa0b1667f0) for task init_env.null.16 of framework OCEANBANK_FRAMEWORK_VERSION_1.2 to master@100.90.207.13:8000
+I0815 10:38:40.388082 13546 slave.cpp:4166] Sending acknowledgement for status update TASK_FINISHED (UUID: 6e23342d-35de-4420-bd74-f6aa0b1667f0) for task init_env.null.16 of framework OCEANBANK_FRAMEWORK_VERSION_1.2 to executor(1)@100.90.208.12:25523
+I0815 10:38:40.460572 13562 status_update_manager.cpp:395] Received status update acknowledgement (UUID: 6e23342d-35de-4420-bd74-f6aa0b1667f0) for task init_env.null.16 of framework OCEANBANK_FRAMEWORK_VERSION_1.2
+
+
+
+I0815 10:38:40.461938 13552 slave.cpp:1625] Got assigned task 'yyz-test.be8bf7fe-75bc-4024-9d68-2515a2deef36.23' for framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:40.462460 13552 slave.cpp:1625] Got assigned task 'rebu02.cac76aff-7859-413a-82da-c00dc4347257.13' for framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:40.462796 13552 slave.cpp:1785] Launching task 'yyz-test.be8bf7fe-75bc-4024-9d68-2515a2deef36.23' for framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:40.462980 13552 slave.cpp:2140] Queued task 'yyz-test.be8bf7fe-75bc-4024-9d68-2515a2deef36.23' for executor 'container_executor_testLPL' of framework OCEANBANK_FRAMEWORK_VERSION_1.2 at executor(1)@100.90.208.12:25523
+I0815 10:38:40.463451 13552 slave.cpp:1625] Got assigned task 'test_04.1531343e-0b41-4110-acaf-75d920d6f6ae.12' for framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:40.463861 13552 slave.cpp:1785] Launching task 'rebu02.cac76aff-7859-413a-82da-c00dc4347257.13' for framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:40.464028 13552 slave.cpp:2140] Queued task 'rebu02.cac76aff-7859-413a-82da-c00dc4347257.13' for executor 'container_executor_testLPL' of framework OCEANBANK_FRAMEWORK_VERSION_1.2 at executor(1)@100.90.208.12:25523
+I0815 10:38:40.464360 13552 slave.cpp:1785] Launching task 'test_04.1531343e-0b41-4110-acaf-75d920d6f6ae.12' for framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:40.464537 13552 slave.cpp:2140] Queued task 'test_04.1531343e-0b41-4110-acaf-75d920d6f6ae.12' for executor 'container_executor_testLPL' of framework OCEANBANK_FRAMEWORK_VERSION_1.2 at executor(1)@100.90.208.12:25523
+I0815 10:38:40.465019 13552 slave.cpp:2331] Sending queued task 'yyz-test.be8bf7fe-75bc-4024-9d68-2515a2deef36.23' to executor 'container_executor_testLPL' of framework OCEANBANK_FRAMEWORK_VERSION_1.2 at executor(1)@100.90.208.12:25523
+I0815 10:38:40.465415 13552 slave.cpp:2331] Sending queued task 'rebu02.cac76aff-7859-413a-82da-c00dc4347257.13' to executor 'container_executor_testLPL' of framework OCEANBANK_FRAMEWORK_VERSION_1.2 at executor(1)@100.90.208.12:25523
+I0815 10:38:40.465766 13552 slave.cpp:2331] Sending queued task 'test_04.1531343e-0b41-4110-acaf-75d920d6f6ae.12' to executor 'container_executor_testLPL' of framework OCEANBANK_FRAMEWORK_VERSION_1.2 at executor(1)@100.90.208.12:25523
+I0815 10:38:43.020285 13551 slave.cpp:3816] Handling status update TASK_RUNNING (UUID: f279b6a7-b002-4a21-b994-81cdc4516d05) for task yyz-test.be8bf7fe-75bc-4024-9d68-2515a2deef36.23 of framework OCEANBANK_FRAMEWORK_VERSION_1.2 from executor(1)@100.90.208.12:25523
+I0815 10:38:43.020675 13551 slave.cpp:3816] Handling status update TASK_RUNNING (UUID: 1cf78e4a-d79d-4e35-9af1-2b404e87d3b5) for task rebu02.cac76aff-7859-413a-82da-c00dc4347257.13 of framework OCEANBANK_FRAMEWORK_VERSION_1.2 from executor(1)@100.90.208.12:25523
+I0815 10:38:43.020915 13551 slave.cpp:3816] Handling status update TASK_ERROR (UUID: 413c1c8a-afd0-4f3c-860e-4c5873344fdc) for task test_04.1531343e-0b41-4110-acaf-75d920d6f6ae.12 of framework OCEANBANK_FRAMEWORK_VERSION_1.2 from executor(1)@100.90.208.12:25523
+I0815 10:38:43.021941 13551 status_update_manager.cpp:323] Received status update TASK_RUNNING (UUID: f279b6a7-b002-4a21-b994-81cdc4516d05) for task yyz-test.be8bf7fe-75bc-4024-9d68-2515a2deef36.23 of framework OCEANBANK_FRAMEWORK_VERSION_1.2
+E0815 10:38:43.022680 13549 slave.cpp:7075] Unexpected terminal task state TASK_ERROR
+I0815 10:38:43.022709 13551 status_update_manager.cpp:323] Received status update TASK_RUNNING (UUID: 1cf78e4a-d79d-4e35-9af1-2b404e87d3b5) for task rebu02.cac76aff-7859-413a-82da-c00dc4347257.13 of framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:43.022999 13549 slave.cpp:4256] Forwarding the update TASK_RUNNING (UUID: f279b6a7-b002-4a21-b994-81cdc4516d05) for task yyz-test.be8bf7fe-75bc-4024-9d68-2515a2deef36.23 of framework OCEANBANK_FRAMEWORK_VERSION_1.2 to master@100.90.207.13:8000
+I0815 10:38:43.023581 13549 slave.cpp:4166] Sending acknowledgement for status update TASK_RUNNING (UUID: f279b6a7-b002-4a21-b994-81cdc4516d05) for task yyz-test.be8bf7fe-75bc-4024-9d68-2515a2deef36.23 of framework OCEANBANK_FRAMEWORK_VERSION_1.2 to executor(1)@100.90.208.12:25523
+I0815 10:38:43.023829 13549 slave.cpp:4256] Forwarding the update TASK_RUNNING (UUID: 1cf78e4a-d79d-4e35-9af1-2b404e87d3b5) for task rebu02.cac76aff-7859-413a-82da-c00dc4347257.13 of framework OCEANBANK_FRAMEWORK_VERSION_1.2 to master@100.90.207.13:8000
+I0815 10:38:43.024070 13549 slave.cpp:4166] Sending acknowledgement for status update TASK_RUNNING (UUID: 1cf78e4a-d79d-4e35-9af1-2b404e87d3b5) for task rebu02.cac76aff-7859-413a-82da-c00dc4347257.13 of framework OCEANBANK_FRAMEWORK_VERSION_1.2 to executor(1)@100.90.208.12:25523
+I0815 10:38:43.024375 13550 status_update_manager.cpp:323] Received status update TASK_ERROR (UUID: 413c1c8a-afd0-4f3c-860e-4c5873344fdc) for task test_04.1531343e-0b41-4110-acaf-75d920d6f6ae.12 of framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:43.024860 13564 slave.cpp:4256] Forwarding the update TASK_ERROR (UUID: 413c1c8a-afd0-4f3c-860e-4c5873344fdc) for task test_04.1531343e-0b41-4110-acaf-75d920d6f6ae.12 of framework OCEANBANK_FRAMEWORK_VERSION_1.2 to master@100.90.207.13:8000
+I0815 10:38:43.025116 13564 slave.cpp:4166] Sending acknowledgement for status update TASK_ERROR (UUID: 413c1c8a-afd0-4f3c-860e-4c5873344fdc) for task test_04.1531343e-0b41-4110-acaf-75d920d6f6ae.12 of framework OCEANBANK_FRAMEWORK_VERSION_1.2 to executor(1)@100.90.208.12:25523
+I0815 10:38:43.026715 13564 status_update_manager.cpp:395] Received status update acknowledgement (UUID: f279b6a7-b002-4a21-b994-81cdc4516d05) for task yyz-test.be8bf7fe-75bc-4024-9d68-2515a2deef36.23 of framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:43.028251 13556 status_update_manager.cpp:395] Received status update acknowledgement (UUID: 1cf78e4a-d79d-4e35-9af1-2b404e87d3b5) for task rebu02.cac76aff-7859-413a-82da-c00dc4347257.13 of framework OCEANBANK_FRAMEWORK_VERSION_1.2
+I0815 10:38:43.029289 13551 status_update_manager.cpp:395] Received status update acknowledgement (UUID: 413c1c8a-afd0-4f3c-860e-4c5873344fdc) for task test_04.1531343e-0b41-4110-acaf-75d920d6f6ae.12 of framework OCEANBANK_FRAMEWORK_VERSION_1.2
+
+

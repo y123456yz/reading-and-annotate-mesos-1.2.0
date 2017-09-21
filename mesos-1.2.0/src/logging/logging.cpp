@@ -103,7 +103,7 @@ inline void handler(int signal, siginfo_t *siginfo, void *context)
 }
 #endif // __WINDOWS__
 
-
+//默认INFO
 google::LogSeverity getLogSeverity(const string& logging_level)
 {
   if (logging_level == "INFO") {
@@ -119,6 +119,7 @@ google::LogSeverity getLogSeverity(const string& logging_level)
 }
 
 
+//日志和信号处理相关
 void initialize(
     const string& _argv0,
     const Flags& flags,
@@ -132,6 +133,7 @@ void initialize(
 
   argv0 = _argv0;
 
+  //日志级别只有这几个
   if (flags.logging_level != "INFO" &&
       flags.logging_level != "WARNING" &&
       flags.logging_level != "ERROR") {
@@ -141,7 +143,7 @@ void initialize(
       << " 'logging_level' flag are: 'INFO', 'WARNING', 'ERROR'.";
   }
 
-  FLAGS_minloglevel = getLogSeverity(flags.logging_level);
+  FLAGS_minloglevel = getLogSeverity(flags.logging_level); //日志级别
 
   if (flags.log_dir.isSome()) {
     Try<Nothing> mkdir = os::mkdir(flags.log_dir.get());
@@ -199,7 +201,7 @@ void initialize(
   VLOG(1) << "Logging to " <<
     (flags.log_dir.isSome() ? flags.log_dir.get() : "STDERR");
 
-  if (installFailureSignalHandler) {
+  if (installFailureSignalHandler) { //信号处理
   // glog on Windows does not support `InstallFailureSignalHandler`.
 #ifndef __WINDOWS__
     // Handles SIGSEGV, SIGILL, SIGFPE, SIGABRT, SIGBUS, SIGTERM

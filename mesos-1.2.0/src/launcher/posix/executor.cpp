@@ -126,6 +126,9 @@ pid_t launchTaskPosix(
   vector<string> argv(2);
   argv[0] = MESOS_CONTAINERIZER;
   argv[1] = MesosContainerizerLaunch::NAME;
+  //argv[1] = "launch > /lauch.log";
+  LOG(INFO) << "lauchflags: cc";
+  LOG(INFO) << "lauchflags:" << launchFlags;
 
   Try<Subprocess> s = subprocess(
       path::join(launcherDir, MESOS_CONTAINERIZER),
@@ -133,7 +136,7 @@ pid_t launchTaskPosix(
       Subprocess::FD(STDIN_FILENO),
       Subprocess::FD(STDOUT_FILENO),
       Subprocess::FD(STDERR_FILENO),
-      &launchFlags,
+      &launchFlags, //参数这里会携带进入mesos-containerizer launch进程
       None(),
       None(),
       {},

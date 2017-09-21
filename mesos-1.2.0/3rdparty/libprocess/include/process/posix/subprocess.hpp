@@ -195,7 +195,7 @@ inline int childMain(
   ABORT("Failed to os::execvpe on path '" + path + "': " + os::strerror(errno));
 }
 
-
+//把argv程序通过fork起起来，默认fork函数在defaultClone
 inline Try<pid_t> cloneChild(
     const std::string& path,
     std::vector<std::string> argv,
@@ -246,7 +246,7 @@ inline Try<pid_t> cloneChild(
 
   // Currently we will block the child's execution of the new process
   // until all the `parent_hooks` (if any) have executed.
-  std::array<int, 2> pipes;
+  std::array<int, 2> pipes; //主要进行父子进程通信
   const bool blocking = !parent_hooks.empty();
 
   if (blocking) {
@@ -332,8 +332,9 @@ inline Try<pid_t> cloneChild(
     // continue by writing to the pipe.
     char dummy;
     ssize_t length;
+	//等待住进程通过pipe通信唤醒，例如MesosContainerizerProcess::_launch->MesosContainerizerProcess::exec
     while ((length = ::write(pipes[1], &dummy, sizeof(dummy))) == -1 &&
-           errno == EINTR);
+           errno == EINTR); //
 
     os::close(pipes[1]);
 
@@ -345,6 +346,7 @@ inline Try<pid_t> cloneChild(
     }
   }
 
+  
   return pid;
 }
 

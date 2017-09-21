@@ -79,6 +79,10 @@ public:
 int main(int argc, char** argv)
 {
   TestExecutor executor;
+  //Executor的运行主要依赖于MesosExecutorDriver作为封装，和mesos-slave进行通信。
   MesosExecutorDriver driver(&executor);
-  return driver.run() == DRIVER_STOPPED ? 0 : 1;
+  printf("yang test 111111111\r\n");  
+
+  //Driver->run()调用start() MesosSchedulerDriver::start
+return driver.run() == DRIVER_STOPPED ? 0 : 1;  //MesosExecutorDriver::run
 }

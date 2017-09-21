@@ -438,7 +438,8 @@ Future<bool> ComposingContainerizerProcess::_launch(
         lambda::_1));
 }
 
-
+//Slave::runTask->Slave::run->Slave::_run->Framework::launchExecutor->MesosContainerizer::launch->MesosContainerizerProcess::launch
+//->MesosContainerizerProcess::_launch
 Future<bool> ComposingContainerizerProcess::launch(
     const ContainerID& containerId,
     const Option<TaskInfo>& taskInfo,
@@ -482,7 +483,7 @@ Future<bool> ComposingContainerizerProcess::launch(
                 environment,
                 checkpoint,
                 containerizer,
-                lambda::_1));
+                lambda::_1)); //Self::_launch，主要是最后调用调用MesosContainerizerProcess::_launch
 }
 
 

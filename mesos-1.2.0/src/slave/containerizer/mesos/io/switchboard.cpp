@@ -191,6 +191,7 @@ Future<Nothing> IOSwitchboard::recover(
                             pid.error() :
                             "pid file does not exist"));
     }
+	LOG(INFO) << "lIOSwitchboard::recover:" << containerId ;
 
     infos[containerId] = Owned<Info>(new Info(
       pid.get(),
@@ -219,6 +220,7 @@ Future<Nothing> IOSwitchboard::recover(
     // populate our info struct and rely on the containerizer to
     // destroy the orphaned container and call `cleanup()` on us later.
     if (pid.isSome()) {
+		LOG(INFO) << "lIOSwitchboard::recover:" ;
       infos[orphan] = Owned<Info>(new Info(
         pid.get(),
         process::reap(pid.get()).onAny(defer(
@@ -645,6 +647,7 @@ Future<Option<ContainerLaunchInfo>> IOSwitchboard::_prepare(
   }
 
   // Build an info struct for this container.
+  LOG(INFO) << "lIOSwitchboard::recover:  xxx"  ;
   infos[containerId] = Owned<Info>(new Info(
     child->pid(),
     process::reap(child->pid()).onAny(defer(

@@ -594,6 +594,7 @@ void Slave::shutdown()
 {
   cleanUpContainersInDestructor = false;
 
+  LOG(INFO) << "Slave::shutdown" << process::UPID().id;
   process::dispatch(slave.get(), &slave::Slave::shutdown, process::UPID(), "");
   wait();
 }

@@ -34,6 +34,16 @@ namespace detector {
  * An abstraction of a Master detector which can be used to
  * detect the leading master from a group.
  */
+
+/*
+ Framework注册过程: http://dongxicheng.org/apache-mesos/apache-mesos-framework-executor-registering/
+（1） JobTracker启动时，会调用MesosScheduler的start()方法
+（2） MesosScheduler的start()方法创建一个MesosSchedulerDriver对象，并将自己作为参数传入该对象。
+（3） MesosSchedulerDriver初始化，创建一个SchedulerProcess对象
+（4） MesosSchedulerDriver初始化，调用MasterDetector::create()，它将向SchedulerProcess对象发送一个NewMasterDetectedMessage消息
+（5） SchedulerProcess对象收到NewMasterDetectedMessage消息后，向Master发送一个RegisterFrameworkMessage消息
+（6） Master收到该消息后，保存相关信息，并返回FrameworkRegistedMessage消息，确认framework注册成功
+*/
 class MasterDetector
 {
 public:

@@ -37,6 +37,8 @@ namespace slave {
 namespace containerizer {
 namespace paths {
 
+//
+//yang add  /var/run/mesos/containers/53d4aa2e-6102-46fa-8029-0d34d4e03e9c/pid 这里面是mesos-containerizer launch进程pid
 constexpr char PID_FILE[] = "pid";
 constexpr char STATUS_FILE[] = "status";
 constexpr char TERMINATION_FILE[] = "termination";

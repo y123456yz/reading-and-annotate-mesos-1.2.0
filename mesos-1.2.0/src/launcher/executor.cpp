@@ -108,6 +108,9 @@ using mesos::v1::executor::V0ToV1Adapter;
 namespace mesos {
 namespace internal {
 
+//executor分为CommandExecutor和DefaultExecutor
+//使用见src/launcher/executor.cpp中的main中new CommandExecutor类 
+//src/laucher/default_executor.cpp中的main函数中new DefaultExecutor类
 class CommandExecutor: public ProtobufProcess<CommandExecutor>
 {
 public:
@@ -173,7 +176,7 @@ public:
 
   void received(const Event& event)
   {
-    cout << "Received " << event.type() << " event" << endl;
+    LOG(INFO) << "Received " << event.type() << " event" << endl;
 
     switch (event.type()) {
       case Event::SUBSCRIBED: {
@@ -191,7 +194,7 @@ public:
       }
 
       case Event::LAUNCH_GROUP: {
-        cerr << "LAUNCH_GROUP event is not supported" << endl;
+        LOG(INFO) <<  "LAUNCH_GROUP event is not supported";
         // Shut down because this is unexpected; `LAUNCH_GROUP` event
         // should only ever go to a group-capable default executor and
         // not the command executor.
@@ -200,6 +203,7 @@ public:
       }
 
       case Event::KILL: {
+		system("echo event-KILL >> /yyz2.log");
         Option<KillPolicy> override = event.kill().has_kill_policy()
           ? Option<KillPolicy>(event.kill().kill_policy())
           : None();
@@ -255,6 +259,7 @@ protected:
 
     // We initialize the library here to ensure that callbacks are only invoked
     // after the process has spawned.
+    LOG(INFO) << "laucher executor";
     if (value.isSome() && value.get() == "1") {
       mesos.reset(new Mesos(
           ContentType::PROTOBUF,
@@ -481,6 +486,7 @@ protected:
     // Monitor this process.
     process::reap(pid)
       .onAny(defer(self(), &Self::reaped, pid, lambda::_1));
+	LOG(INFO) << "launch: reaped:" << pid ;
 
     update(unacknowledgedTask->task_id(), TASK_RUNNING);
 
@@ -511,7 +517,7 @@ protected:
 
   void shutdown()
   {
-    cout << "Shutting down" << endl;
+    LOG(INFO)  << "Shutting down" ;
 
     // NOTE: We leave a small buffer of time to do the forced kill, otherwise
     // the agent may destroy the container before we can send `TASK_KILLED`.
@@ -612,25 +618,26 @@ private:
       // Now perform signal escalation to begin killing the task.
       CHECK_GT(pid, 0);
 
-      cout << "Sending SIGTERM to process tree at pid " << pid << endl;
+      LOG(INFO) << "Sending SIGTERM to process tree at pid " << pid;
 
       Try<std::list<os::ProcessTree>> trees =
         os::killtree(pid, SIGTERM, true, true);
 
       if (trees.isError()) {
-        cerr << "Failed to kill the process tree rooted at pid " << pid
-             << ": " << trees.error() << endl;
+        LOG(INFO) << "Failed to kill the process tree rooted at pid " << pid
+             << ": " << trees.error();
 
         // Send SIGTERM directly to process 'pid' as it may not have
         // received signal before os::killtree() failed.
+        system("echo event-KILLthe  >> /yyz2.log");
         os::kill(pid, SIGTERM);
       } else {
         cout << "Sent SIGTERM to the following process trees:\n"
              << stringify(trees.get()) << endl;
       }
 
-      cout << "Scheduling escalation to SIGKILL in " << gracePeriod
-           << " from now" << endl;
+      LOG(INFO) << "Scheduling escalation to SIGKILL in " << gracePeriod
+           << " from now" ;
 
       killGracePeriodTimer =
         delay(gracePeriod, self(), &Self::escalated, gracePeriod);
@@ -712,8 +719,8 @@ private:
       return;
     }
 
-    cout << "Process " << pid << " did not terminate after " << timeout
-         << ", sending SIGKILL to process tree at " << pid << endl;
+    LOG(INFO) << "Process " << pid << " did not terminate after " << timeout
+         << ", sending SIGKILL to process tree at " << pid ;
 
     // TODO(nnielsen): Sending SIGTERM in the first stage of the
     // shutdown may leave orphan processes hanging off init. This
@@ -723,12 +730,13 @@ private:
       os::killtree(pid, SIGKILL, true, true);
 
     if (trees.isError()) {
-      cerr << "Failed to kill the process tree rooted at pid "
-           << pid << ": " << trees.error() << endl;
+      LOG(INFO) << "Failed to kill the process tree rooted at pid "
+           << pid << ": " << trees.error();
 
       // Process 'pid' may not have received signal before
       // os::killtree() failed. To make sure process 'pid' is reaped
       // we send SIGKILL directly.
+      system("echo event-KILLdthe  >> /yyz2.log");
       os::kill(pid, SIGKILL);
     } else {
       cout << "Killed the following process trees:\n" << stringify(trees.get())
@@ -900,7 +908,7 @@ public:
   string launcher_dir;
 };
 
-
+//src/launcher/executor.cpp中的main
 int main(int argc, char** argv)
 {
   Flags flags;
@@ -909,6 +917,7 @@ int main(int argc, char** argv)
 
   process::initialize();
 
+  system("echo src-laucher-main >> /yyz2.log");
   // Load flags from command line.
   Try<flags::Warnings> load = flags.load(None(), &argc, &argv);
 

@@ -47,7 +47,7 @@ GarbageCollectorProcess::~GarbageCollectorProcess()
   }
 }
 
-
+//Slave::garbageCollect÷–÷¥––
 Future<Nothing> GarbageCollectorProcess::schedule(
     const Duration& d,
     const string& path)

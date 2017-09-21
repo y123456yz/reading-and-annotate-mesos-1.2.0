@@ -297,13 +297,14 @@ static void cleanup(
 // practical to attempt to re-parse the command that is passed in and properly
 // escape it. Therefore, incorrectly-quoted command arguments will probably
 // lead the child process to terminate with an error.
-Try<Subprocess> subprocess(
-    const string& path,
-    vector<string> argv,
+//这里实际上获取到的是mesos-containerizer launch进程的ID, mesos-containerizer lauch进程运行的地方在MesosContainerizerMount::execute
+Try<Subprocess> subprocess( 
+    const string& path,  //mesos-containerizer launch中的mesos-containerizer
+    vector<string> argv,  //mesos-containerizer launch中的launch
     const Subprocess::IO& in,
     const Subprocess::IO& out,
     const Subprocess::IO& err,
-    const flags::FlagsBase* flags,
+    const flags::FlagsBase* flags, //命令行参数列表
     const Option<map<string, string>>& environment,
     const Option<lambda::function<
         pid_t(const lambda::function<int()>&)>>& _clone,
@@ -358,7 +359,7 @@ Try<Subprocess> subprocess(
 
   // Prepare the arguments. If the user specifies the 'flags', we will
   // stringify them and append them to the existing arguments.
-  if (flags != nullptr) {
+  if (flags != nullptr) { //--commands=flags参数信息
     foreachvalue (const flags::Flag& flag, *flags) {
       Option<string> value = flag.stringify(*flags);
       if (value.isSome()) {
@@ -381,7 +382,8 @@ Try<Subprocess> subprocess(
   // it in the non-`__WINDOWS__` branch.
   {
 #ifndef __WINDOWS__
-    Try<pid_t> pid = internal::cloneChild(
+    Try<pid_t> pid = internal::cloneChild( 
+    //这里实际上获取到的是mesos-containerizer launch进程的ID, mesos-containerizer lauch进程运行的地方在MesosContainerizerMount::execute
         path,
         argv,
         environment,

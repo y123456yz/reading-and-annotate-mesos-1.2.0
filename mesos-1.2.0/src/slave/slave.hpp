@@ -743,7 +743,7 @@ private:
 
   const Http http;
 
-  SlaveInfo info;
+  SlaveInfo info; //赋值见Slave::recover
 
   // Resources that are checkpointed by the slave.
   Resources checkpointedResources;
@@ -754,8 +754,10 @@ private:
 
   Option<process::UPID> master;
 
-  hashmap<FrameworkID, Framework*> frameworks;
+  //Slave::removeFramework中做erase操作
+  hashmap<FrameworkID, Framework*> frameworks; //slave所属的frameworkes全部放入该hash，见Slave::recoverFramework
 
+  //Slave::removeFramework中赋值
   BoundedHashMap<FrameworkID, process::Owned<Framework>> completedFrameworks;
 
   mesos::master::detector::MasterDetector* detector;
@@ -872,7 +874,7 @@ std::ostream& operator<<(std::ostream& stream, const Executor& executor);
 
 
 // Information describing an executor.
-struct Executor
+struct Executor  //Framework::recoverExecutor中调用new该类
 {
   Executor(
       Slave* slave,
@@ -994,26 +996,27 @@ struct Executor
   // public views into them.
 
   // Not yet launched tasks. This also includes tasks from `queuedTaskGroups`.
-  LinkedHashMap<TaskID, TaskInfo> queuedTasks;
+  LinkedHashMap<TaskID, TaskInfo> queuedTasks;//赋值见Executor::completeTask
 
   // Not yet launched task groups. This is needed for correctly sending
   // TASK_KILLED status updates for all tasks in the group if any of the
   // tasks were killed before the executor could register with the agent.
   //
   // TODO(anand): Replace this with `LinkedHashSet` when it is available.
-  std::list<TaskGroupInfo> queuedTaskGroups;
+  std::list<TaskGroupInfo> queuedTaskGroups;//赋值见Executor::completeTask
 
   // Running.
   LinkedHashMap<TaskID, Task*> launchedTasks;
 
   // Terminated but pending updates.
-  LinkedHashMap<TaskID, Task*> terminatedTasks;
+  LinkedHashMap<TaskID, Task*> terminatedTasks; //赋值见Executor::completeTask
 
   // Terminated and updates acked.
   // NOTE: We use a shared pointer for Task because clang doesn't like
   // Boost's implementation of circular_buffer with Task (Boost
   // attempts to do some memset's which are unsafe).
-  boost::circular_buffer<std::shared_ptr<Task>> completedTasks;
+  //赋值见completeTask
+  boost::circular_buffer<std::shared_ptr<Task>> completedTasks; //赋值见completeTask
 
   // When the slave initiates a destroy of the container, we expect a
   // termination to occur. The 'pendingTermation' indicates why the
@@ -1031,7 +1034,7 @@ private:
 
 
 // Information about a framework.
-struct Framework
+struct Framework  //Slave::recoverFramework new改类
 {
   Framework(
       Slave* slave,
@@ -1074,7 +1077,7 @@ struct Framework
   // driver. Frameworks using the HTTP API (in 0.24.0) will
   // not have a 'pid', in which case executor messages are
   // sent through the master.
-  Option<process::UPID> pid;
+  Option<process::UPID> pid; 
 
   // Executors can be found in one of the following
   // data structures:
@@ -1086,7 +1089,7 @@ struct Framework
   // Executors with pending tasks.
   hashmap<ExecutorID, hashmap<TaskID, TaskInfo>> pending;
 
-  // Current running executors.
+  // Current running executors.   赋值见Framework::recoverExecutor
   hashmap<ExecutorID, Executor*> executors;
 
   boost::circular_buffer<process::Owned<Executor>> completedExecutors;

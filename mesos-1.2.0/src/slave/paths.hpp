@@ -107,7 +107,7 @@ Try<ExecutorRunPath> parseExecutorRunPath(
     const std::string& rootDir,
     const std::string& dir);
 
-
+//work-mesos/meta/slaves/latest -> ./work-mesos/meta/slaves/fba6e290-5566-420e-8489-1dc87ddfdc93-S18
 const char LATEST_SYMLINK[] = "latest";
 
 // Helpers for obtaining paths in the layout:

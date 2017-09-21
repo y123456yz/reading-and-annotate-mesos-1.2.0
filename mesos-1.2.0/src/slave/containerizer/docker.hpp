@@ -117,7 +117,8 @@ private:
 };
 
 
-
+//--cgroups_root=VALUE配置   cgroups_root
+//默认mesos 也可以带上docker等，这个会影响是使用MesosContainerizerProcess还是DockerContainerizerProcess
 class DockerContainerizerProcess
   : public process::Process<DockerContainerizerProcess>
 {
@@ -518,6 +519,7 @@ private:
     bool launchesExecutorContainer;
   };
 
+  //MesosContainerizerProcess::launch中会put进来
   hashmap<ContainerID, Container*> containers_;
 };
 

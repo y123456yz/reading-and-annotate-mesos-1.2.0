@@ -77,6 +77,9 @@ using std::vector;
 namespace mesos {
 namespace internal {
 
+//executor分为CommandExecutor和DefaultExecutor
+//使用见src/launcher/executor.cpp中的main中new CommandExecutor类 
+//src/laucher/default_executor.cpp中的main函数中new DefaultExecutor类
 class DefaultExecutor : public ProtobufProcess<DefaultExecutor>
 {
 private:
@@ -152,6 +155,7 @@ public:
   {
     LOG(INFO) << "Received " << event.type() << " event";
 
+	system("echo received--xxxx >> /yyz2.log");
     switch (event.type()) {
       case Event::SUBSCRIBED: {
         LOG(INFO) << "Subscribed executor on "
@@ -187,6 +191,7 @@ public:
       }
 
       case Event::KILL: {
+	  	system("echo received--event-kill >> /yyz2.log");
         killTask(event.kill().task_id());
         break;
       }
@@ -202,6 +207,7 @@ public:
       }
 
       case Event::SHUTDOWN: {
+	  	LOG(ERROR) << "LAUNCH event shutdown";
         shutdown();
         break;
       }
@@ -225,6 +231,7 @@ public:
 protected:
   virtual void initialize()
   {
+    LOG(INFO) << "default executor";
     mesos.reset(new Mesos(
         contentType,
         defer(self(), &Self::connected),
@@ -735,7 +742,7 @@ protected:
       return;
     }
 
-    LOG(INFO) << "Shutting down";
+    LOG(INFO) << "Shutting down ...";
 
     shuttingDown = true;
 
@@ -797,6 +804,7 @@ protected:
   {
     const Duration duration = Seconds(1);
 
+    system("echo __shutdown---- >> /yyz2.log");
     LOG(INFO) << "Terminating after " << duration;
 
     // TODO(qianzhang): Remove this hack since the executor now receives
@@ -1073,10 +1081,11 @@ public:
   string launcher_dir;
 };
 
-
+//src/laucher/default_executor.cpp中的main函数中new DefaultExecutor类
 int main(int argc, char** argv)
 {
   process::initialize();
+  system("echo src-defaultexecutor-laucher-main >> /yyz2.log");
 
   Flags flags;
   mesos::FrameworkID frameworkId;

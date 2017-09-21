@@ -115,6 +115,7 @@ public:
     event.set_type(Event::KILL);
 
     Event::Kill* kill = event.mutable_kill();
+	LOG(WARNING) << "killTask";
 
     kill->mutable_task_id()->CopyFrom(evolve(taskId));
 

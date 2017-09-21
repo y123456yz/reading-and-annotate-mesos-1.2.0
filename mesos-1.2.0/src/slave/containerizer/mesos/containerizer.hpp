@@ -122,6 +122,8 @@ private:
 };
 
 
+//--cgroups_root=VALUE配置   cgroups_root
+//默认mesos 也可以带上docker等，这个会影响是使用MesosContainerizerProcess还是DockerContainerizerProcess
 class MesosContainerizerProcess
   : public process::Process<MesosContainerizerProcess>
 {
@@ -364,6 +366,8 @@ private:
     hashset<ContainerID> children;
   };
 
+  //MesosContainerizerProcess::launch(第4个lauch赋值) 和 MesosContainerizerProcess::__recover中会插入成员进来
+  //Container对应Containerizer.hpp (src\slave\containerizer\mesos):  struct Container
   hashmap<ContainerID, process::Owned<Container>> containers_;
 
   struct Metrics

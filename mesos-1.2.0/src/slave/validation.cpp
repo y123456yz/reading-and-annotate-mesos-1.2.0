@@ -27,6 +27,7 @@
 #include "checks/checker.hpp"
 
 #include "common/validation.hpp"
+#include "logging/logging.hpp"
 
 using std::string;
 
@@ -205,6 +206,7 @@ Option<Error> validate(
     }
 
     case mesos::agent::Call::KILL_NESTED_CONTAINER: {
+		LOG(INFO) << "killTask";
       if (!call.has_kill_nested_container()) {
         return Error("Expecting 'kill_nested_container' to be present");
       }

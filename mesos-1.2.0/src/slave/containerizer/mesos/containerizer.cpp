@@ -140,6 +140,7 @@ namespace mesos {
 namespace internal {
 namespace slave {
 
+//主要是创建//创建LinuxLauncher任务类
 Try<MesosContainerizer*> MesosContainerizer::create(
     const Flags& flags,
     bool local,
@@ -149,6 +150,9 @@ Try<MesosContainerizer*> MesosContainerizer::create(
   // Modify `flags` based on the deprecated `isolation` flag (and then
   // use `flags_` in the rest of this function).
   Flags flags_ = flags;
+
+  //yang test isolation: posix/cpu,posix/mem
+  //LOG(INFO) << "yang test isolation: " << flags.isolation ;
 
   if (flags.isolation == "process") {
     LOG(WARNING) << "The 'process' isolation flag is deprecated, "
@@ -176,7 +180,7 @@ Try<MesosContainerizer*> MesosContainerizer::create(
   // 'filesystem/windows' on Windows) will be used
   //
   // TODO(jieyu): Check that only one filesystem isolator is used.
-  if (!strings::contains(flags_.isolation, "filesystem/")) {
+  if (!strings::contains(flags_.isolation, "filesystem/")) { //isolation中不包含filesystem则添加,filesystem/posix
 #ifndef __WINDOWS__
     flags_.isolation += ",filesystem/posix";
 #else
@@ -201,7 +205,7 @@ Try<MesosContainerizer*> MesosContainerizer::create(
   // isolator will be used.
 
   // TODO(jieyu): Check that only one network isolator is used.
-  if (!strings::contains(flags_.isolation, "network/")) {
+  if (!strings::contains(flags_.isolation, "network/")) {//isolation中不包含network则添加,,network/cni
     flags_.isolation += ",network/cni";
   }
 
@@ -216,14 +220,14 @@ Try<MesosContainerizer*> MesosContainerizer::create(
     flags_.isolation += ",volume/image";
   }
 #endif // __linux__
-
-  LOG(INFO) << "Using isolation: " << flags_.isolation;
+  //Using isolation: posix/cpu,posix/mem,filesystem/posix,network/cniUsing launcher: linux
+  LOG(INFO) << "Using isolation: " << flags_.isolation << "Using launcher: " << flags_.launcher;
 
   // Create the launcher for the MesosContainerizer.
-  Try<Launcher*> launcher = [&flags_]() -> Try<Launcher*> {
+  Try<Launcher*> launcher = [&flags_]() -> Try<Launcher*> { //创建LinuxLauncher  linux系统中launcher为LinuxLauncher
 #ifdef __linux__
-    if (flags_.launcher == "linux") {
-      return LinuxLauncher::create(flags_);
+    if (flags_.launcher == "linux") { //走这里
+      return LinuxLauncher::create(flags_); //创建LinuxLauncher任务类
     } else if (flags_.launcher == "posix") {
       return PosixLauncher::create(flags_);
     } else {
@@ -243,6 +247,8 @@ Try<MesosContainerizer*> MesosContainerizer::create(
     return PosixLauncher::create(flags_);
 #endif // __linux__
   }();
+
+  //前面创建好了LinuxLauncher
 
   if (launcher.isError()) {
     return Error("Failed to create launcher: " + launcher.error());
@@ -469,6 +475,9 @@ Future<Nothing> MesosContainerizer::recover(
 }
 
 
+//Slave::runTask->Slave::run->Slave::_run->Framework::launchExecutor->MesosContainerizer::launch
+//->MesosContainerizerProcess::launch(lauuch有好几个接口，一般是第三个lauch接口走到这里)->MesosContainerizerProcess::_launch
+
 Future<bool> MesosContainerizer::launch(
     const ContainerID& containerId,
     const Option<TaskInfo>& taskInfo,
@@ -490,6 +499,7 @@ Future<bool> MesosContainerizer::launch(
       const map<string, string>&,
       bool) = &MesosContainerizerProcess::launch;
 
+  //调用MesosContainerizerProcess::launch
   return dispatch(process.get(),
                   launch,
                   containerId,
@@ -502,7 +512,8 @@ Future<bool> MesosContainerizer::launch(
                   checkpoint);
 }
 
-
+//Slave::runTask->Slave::run->Slave::_run->Framework::launchExecutor->MesosContainerizer::launch
+//->MesosContainerizerProcess::launch(lauuch有好几个接口，一般是第三个lauch接口走到这里)->MesosContainerizerProcess::_launch
 Future<bool> MesosContainerizer::launch(
     const ContainerID& containerId,
     const CommandInfo& commandInfo,
@@ -921,6 +932,7 @@ Future<Nothing> MesosContainerizerProcess::__recover(
                containers_) {
     if (containerId.has_parent()) {
       CHECK(containers_.contains(containerId.parent()));
+	  LOG(INFO) << "MesosContainerizerProcess::__recover insert :" << containerId;
       containers_[containerId.parent()]->children.insert(containerId);
     }
 
@@ -929,12 +941,13 @@ Future<Nothing> MesosContainerizerProcess::__recover(
     // to make sure all child containers are cleaned up before it
     // starts to cleanup the parent container.
     container->status->onAny(defer(self(), &Self::reaped, containerId));
+	LOG(INFO) << "MesosContainerizerProcess::__recover:" << containerId;
   }
 
   // Destroy all the orphan containers.
   foreach (const ContainerID& containerId, orphans) {
     LOG(INFO) << "Cleaning up orphan container " << containerId;
-    destroy(containerId);
+    destroy(containerId); //MesosContainerizerProcess::destroy
   }
 
   return Nothing();
@@ -950,6 +963,11 @@ Future<Nothing> MesosContainerizerProcess::__recover(
 // 5. Exec the executor. The forked child is signalled to continue. It will
 //    first execute any preparation commands from isolators and then exec the
 //    executor.
+//MesosContainerizer::launch中调用
+//MesosContainerizerProcess::_launch
+
+//Slave::runTask->Slave::run->Slave::_run->Framework::launchExecutor->MesosContainerizer::launch
+//->MesosContainerizerProcess::launch->MesosContainerizerProcess::_launch
 Future<bool> MesosContainerizerProcess::launch(
     const ContainerID& containerId,
     const Option<TaskInfo>& taskInfo,
@@ -961,8 +979,8 @@ Future<bool> MesosContainerizerProcess::launch(
     bool checkpoint)
 {
   CHECK(!containerId.has_parent());
-
-  if (containers_.contains(containerId)) {
+   
+  if (containers_.contains(containerId)) { //已经存在直接fail
     return Failure("Container already started");
   }
 
@@ -976,6 +994,7 @@ Future<bool> MesosContainerizerProcess::launch(
   // it with default container info.
   ExecutorInfo executorInfo = _executorInfo;
 
+  //只有executorInfo.has_container()是Mesos的时候，才使用MesosContainerizer.
   if (executorInfo.has_container() &&
       executorInfo.container().type() != ContainerInfo::MESOS) {
     return false;
@@ -1030,11 +1049,12 @@ Future<bool> MesosContainerizerProcess::launch(
                 containerConfig,
                 environment,
                 slaveId,
-                checkpoint);
+                checkpoint); //到下面的lauch
 }
 
-
-Future<bool> MesosContainerizerProcess::launch(
+//Slave::runTask->Slave::run->Slave::_run->Framework::launchExecutor->MesosContainerizer::launch
+//->MesosContainerizerProcess::launch(lauuch有好几个接口，一般是第三个lauch接口走到这里)->MesosContainerizerProcess::_launch
+Future<bool> MesosContainerizerProcess::launch( //从上面的MesosContainerizerProcess::launch掉到这里
     const ContainerID& containerId,
     const ContainerConfig& containerConfig,
     const map<string, string>& environment,
@@ -1074,6 +1094,7 @@ Future<bool> MesosContainerizerProcess::launch(
     }
   }
 
+  //container见Containerizer.hpp (src\slave\containerizer\mesos)中的struct Container {}
   Owned<Container> container(new Container());
   container->state = PROVISIONING;
   container->config = containerConfig;
@@ -1084,10 +1105,12 @@ Future<bool> MesosContainerizerProcess::launch(
   // which will be used for recursive destroy.
   if (containerId.has_parent()) {
     CHECK(containers_.contains(containerId.parent()));
+	LOG(INFO) << "MesosContainerizerProcess::launch insert :" << containerId;
     containers_[containerId.parent()]->children.insert(containerId);
   }
 
   containers_.put(containerId, container);
+  LOG(INFO) << "MesosContainerizerProcess::launch put :" << containerId;
 
   // We'll first provision the image for the container, and
   // then provision the images specified in `volumes` using
@@ -1096,7 +1119,7 @@ Future<bool> MesosContainerizerProcess::launch(
       !containerConfig.container_info().mesos().has_image()) {
     return prepare(containerId, None())
       .then(defer(self(),
-                  &Self::_launch,
+                  &Self::_launch, //这里调用MesosContainerizerProcess::_launch
                   containerId,
                   environment,
                   slaveId,
@@ -1112,14 +1135,13 @@ Future<bool> MesosContainerizerProcess::launch(
                 [=](const ProvisionInfo& provisionInfo) -> Future<bool> {
       return prepare(containerId, provisionInfo)
         .then(defer(self(),
-                    &Self::_launch,
+                    &Self::_launch,  //这里调用MesosContainerizerProcess::_launch
                     containerId,
                     environment,
                     slaveId,
                     checkpoint));
     }));
 }
-
 
 Future<Nothing> MesosContainerizerProcess::prepare(
     const ContainerID& containerId,
@@ -1198,7 +1220,6 @@ Future<Nothing> MesosContainerizerProcess::prepare(
   return f.then([]() { return Nothing(); });
 }
 
-
 Future<Nothing> MesosContainerizerProcess::fetch(
     const ContainerID& containerId,
     const SlaveID& slaveId)
@@ -1239,7 +1260,9 @@ Future<Nothing> MesosContainerizerProcess::fetch(
     });
 }
 
-
+//Slave::runTask->Slave::run->Slave::_run->Framework::launchExecutor->MesosContainerizer::launch
+//->MesosContainerizerProcess::launch(lauuch有好几个接口，一般是第三个lauch接口走到这里)->MesosContainerizerProcess::_launch
+//->LinuxLauncherProcess::fork(启动mesos-containerizer进程)
 Future<bool> MesosContainerizerProcess::_launch(
     const ContainerID& containerId,
     const map<string, string>& environment,
@@ -1250,6 +1273,7 @@ Future<bool> MesosContainerizerProcess::_launch(
     return Failure("Container destroyed during preparing");
   }
 
+  ////Container对应Containerizer.hpp (src\slave\containerizer\mesos):  struct Container
   const Owned<Container>& container = containers_.at(containerId);
 
   if (container->state == DESTROYING) {
@@ -1513,11 +1537,13 @@ Future<bool> MesosContainerizerProcess::_launch(
   // error. Currently we preserve the previous logic.
   CHECK_SOME(pipes_);
 
+  //mesos-containerizer launch和mesos-agent进程通过pipe()通信，
   const std::array<int_fd, 2>& pipes = pipes_.get();
 
   // Prepare the flags to pass to the launch process.
   MesosContainerizerLaunch::Flags launchFlags;
 
+  //lauch子进程会直接继承该info,也就可以直接使用
   launchFlags.launch_info = JSON::protobuf(launchInfo);
 
   launchFlags.pipe_read = pipes[0];
@@ -1535,8 +1561,34 @@ Future<bool> MesosContainerizerProcess::_launch(
   launchFlags.runtime_directory = runtimePath;
 #endif // __WINDOWS__
 
-  VLOG(1) << "Launching '" << MESOS_CONTAINERIZER << "' with flags '"
-          << launchFlags << "'";
+  /*
+  这里的test-executor在int MesosContainerizerLaunch::execute()中调用执行
+  
+  I0803 21:14:49.190254 36044 containerizer.cpp:1555] Launching 'mesos-containerizer' with flags 
+  '--help="false" --launch_info="{"command":{"shell":true,"value":"\/home\/yangyazhou\/mesos-1.2.0
+  \/src\/.libs\/test-executor"},"environment":{"variables":[{"name":"LIBPROCESS_PORT","value":"0"},
+  {"name":"MESOS_AGENT_ENDPOINT","value":"172.23.133.32:5051"},{"name":"MESOS_CHECKPOINT","value":"0"},
+  {"name":"MESOS_DIRECTORY","value":".\/work-mesos\/slaves\/9c35b61d-8d30-442e-984f-5a3dc9d4d499-S0\
+  /frameworks\/9c35b61d-8d30-442e-984f-5a3dc9d4d499-0000\/executors\/default\/runs\/c2525747-a3fb-490d-af
+  ef-357dfcd7c186"},{"name":"MESOS_EXECUTOR_ID","value":"default"},{"name":"MESOS_EXECUTOR_SHUTDOWN_GR
+  ACE_PERIOD","value":"5secs"},{"name":"MESOS_FRAMEWORK_ID","value":"9c35b61d-8d30-442e-984f-5a3dc9d4d
+  499-0000"},{"name":"MESOS_HTTP_COMMAND_EXECUTOR","value":"0"},{"name":"MESOS_SLAVE_ID","value":"9c35
+  b61d-8d30-442e-984f-5a3dc9d4d499-S0"},{"name":"MESOS_SLAVE_PID","value":"slave(1)@172.23.133.32:5051"},
+  {"name":"MESOS_SANDBOX","value":".\/work-mesos\/slaves\/9c35b61d-8d30-442e-984f-5a3dc9d4d499-S0\
+  /frameworks\/9c35b61d-8d30-442e-984f-5a3dc9d4d499-0000\/executors\/default\/runs\/c2525747-a3fb-490
+  d-afef-357dfcd7c186"}]},"err":{"path":".\/work-mesos\/slaves\/9c35b61d-8d30-442e-984f-5a3dc9d4d499-S
+  0\/frameworks\/9c35b61d-8d30-442e-984f-5a3dc9d4d499-0000\/executors\/default\/runs\/c2525747-a3fb-4
+  90d-afef-357dfcd7c186\/stderr","type":"PATH"},"out":{"path":".\/work-mesos\/slaves\/9c35b61d-8d30-4
+  42e-984f-5a3dc9d4d499-S0\/frameworks\/9c35b61d-8d30-442e-984f-5a3dc9d4d499-0000\/executors\/default
+  \/runs\/c2525747-a3fb-490d-afef-357dfcd7c186\/stdout","type":"PATH"},"user":"root","working_directo
+  ry":".\/work-mesos\/slaves\/9c35b61d-8d30-442e-984f-5a3dc9d4d499-S0\/frameworks\/9c35b61d-8d30-442e
+  -984f-5a3dc9d4d499-0000\/executors\/default\/runs\/c2525747-a3fb-490d-afef-357dfcd7c186"}" --pipe_read
+  ="8" --pipe_write="9" --runtime_directory="/var/run/mesos/containers/c2525747-a3fb-490d-afef-357dfcd7c186" 
+  --unshare_namespace_mnt="false"'
+
+  */
+  //VLOG(1) << "Launching '" << MESOS_CONTAINERIZER << "' with flags '" << launchFlags << "'";
+  LOG(INFO) << "Launching '" << MESOS_CONTAINERIZER << "' with flags '" << launchFlags << "'";
 
   Option<int> _enterNamespaces;
   Option<int> _cloneNamespaces;
@@ -1600,10 +1652,14 @@ Future<bool> MesosContainerizerProcess::_launch(
       launchFlagsEnvironment.end());
 
   // Fork the child using launcher.
+  //root     25216 25195  0 13:07 ?        00:00:00 /usr/local/libexec/mesos/mesos-containerizer launch
   vector<string> argv(2);
   argv[0] = path::join(flags.launcher_dir, MESOS_CONTAINERIZER);
   argv[1] = MesosContainerizerLaunch::NAME;
+  //argv[1] = "launch > /lauch.log";
+  LOG(INFO) << "lauchflags:" << launchFlags;
 
+  //LinuxLauncherProcess::fork   把mesos-containerizer进程启动起来
   Try<pid_t> forked = launcher->fork(
       containerId,
       argv[0],
@@ -1623,7 +1679,7 @@ Future<bool> MesosContainerizerProcess::_launch(
   }
 
   pid_t pid = forked.get();
-  container->pid = pid;
+  container->pid = pid; //子进程PID
 
   // Checkpoint the forked pid if requested by the agent.
   if (checkpoint) {
@@ -1662,8 +1718,9 @@ Future<bool> MesosContainerizerProcess::_launch(
   // destroy them.
   const string pidPath = path::join(
       containerizer::paths::getRuntimePath(flags.runtime_dir, containerId),
-      containerizer::paths::PID_FILE);
-
+      containerizer::paths::PID_FILE); //mesos-containerizer launch进程存在这里面
+  LOG(INFO) << pidPath;  //recover参考FORCE_DESTROY_ON_RECOVERY_FILE
+  
   Try<Nothing> checkpointed =
     slave::state::checkpoint(pidPath, stringify(pid));
 
@@ -1672,21 +1729,30 @@ Future<bool> MesosContainerizerProcess::_launch(
                    " '" + pidPath + "': " + checkpointed.error());
   }
 
+  //Container对应Containerizer.hpp (src\slave\containerizer\mesos):  struct Container
+
   // Monitor the forked process's pid. We keep the future because
   // we'll refer to it again during container destroy.
-  container->status = reap(containerId, pid);
+
+  //通过加打印可以看出reap和reaped函数在isolate执行后才会执行
+  container->status = reap(containerId, pid); //对应reap对应MesosContainerizerProcess::reap
+  //sleep(5);
+  LOG(INFO) << "containerizer end 111111112"; //yang add
+  //containerId判重
   container->status->onAny(defer(self(), &Self::reaped, containerId));
+ // sleep(5);
+
+  LOG(INFO) << "containerizer end 112"; //yang add
 
   return isolate(containerId, pid)
     .then(defer(self(),
                 &Self::fetch,
                 containerId,
                 slaveId))
-    .then(defer(self(), &Self::exec, containerId, pipes[1]))
+    .then(defer(self(), &Self::exec, containerId, pipes[1])) //见MesosContainerizerProcess::exec
     .onAny([pipes]() { os::close(pipes[0]); })
     .onAny([pipes]() { os::close(pipes[1]); });
 }
-
 
 Future<bool> MesosContainerizerProcess::isolate(
     const ContainerID& containerId,
@@ -1735,12 +1801,13 @@ Future<bool> MesosContainerizerProcess::isolate(
   Future<list<Nothing>> future = collect(futures);
 
   containers_.at(containerId)->isolation = future;
+  LOG(INFO) << "MesosContainerizerProcess::isolate"; //yang add
 
   return future.then([]() { return true; });
 }
 
-
-Future<bool> MesosContainerizerProcess::exec(
+////mesos-containerizer launch和mesos-agent进程通过pipe(pipeWrite)通信，见MesosContainerizerProcess::_launch
+Future<bool> MesosContainerizerProcess::exec( 
     const ContainerID& containerId,
     int_fd pipeWrite)
 {
@@ -1761,7 +1828,7 @@ Future<bool> MesosContainerizerProcess::exec(
   char dummy;
   ssize_t length;
   while ((length = os::write(pipeWrite, &dummy, sizeof(dummy))) == -1 &&
-         errno == EINTR);
+         errno == EINTR); //通知mesos-containerizer launch子进程运行对应的task,配合inline Try<pid_t> cloneChild，这里等待被唤醒
 
   if (length != sizeof(dummy)) {
     return Failure("Failed to synchronize child process: " +
@@ -1773,7 +1840,8 @@ Future<bool> MesosContainerizerProcess::exec(
   return true;
 }
 
-
+//Slave::runTask->Slave::run->Slave::_run->Framework::launchExecutor->MesosContainerizer::launch
+//->MesosContainerizerProcess::launch(lauuch有好几个接口，一般是第三个lauch接口走到这里)->MesosContainerizerProcess::_launch
 Future<bool> MesosContainerizerProcess::launch(
     const ContainerID& containerId,
     const CommandInfo& commandInfo,
@@ -2080,7 +2148,7 @@ Future<ContainerStatus> MesosContainerizerProcess::status(
       });
 }
 
-
+//MesosContainerizerProcess::__recover中执行   kill freezer cgroup.proc中的进程
 Future<bool> MesosContainerizerProcess::destroy(
     const ContainerID& containerId)
 {
@@ -2124,12 +2192,12 @@ Future<bool> MesosContainerizerProcess::destroy(
 
   list<Future<bool>> destroys;
   foreach (const ContainerID& child, container->children) {
-    destroys.push_back(destroy(child));
+    destroys.push_back(destroy(child)); //调用MesosContainerizerProcess::destroy   kill  freezer.cgroup.proc中的进程
   }
 
   await(destroys)
     .then(defer(self(), [=](const list<Future<bool>>& futures) {
-      _destroy(containerId, previousState, futures);
+      _destroy(containerId, previousState, futures); //MesosContainerizerProcess::_destroy
       return Nothing();
     }));
 
@@ -2234,7 +2302,7 @@ void MesosContainerizerProcess::__destroy(
 
   // Kill all processes then continue destruction.
   launcher->destroy(containerId)
-    .onAny(defer(self(), &Self::___destroy, containerId, lambda::_1));
+    .onAny(defer(self(), &Self::___destroy, containerId, lambda::_1));//MesosContainerizerProcess::___destroy
 }
 
 
@@ -2267,7 +2335,7 @@ void MesosContainerizerProcess::___destroy(
   CHECK_SOME(container->status);
 
   container->status.get()
-    .onAny(defer(self(), &Self::____destroy, containerId));
+    .onAny(defer(self(), &Self::____destroy, containerId)); //MesosContainerizerProcess::____destroy
 }
 
 
@@ -2422,7 +2490,7 @@ void MesosContainerizerProcess::______destroy(
   containers_.erase(containerId);
 }
 
-
+//对应reap对应Future<Option<int>> MesosContainerizerProcess::reap  reaped对应MesosContainerizerProcess::reaped
 Future<Option<int>> MesosContainerizerProcess::reap(
     const ContainerID& containerId,
     pid_t pid)
@@ -2437,12 +2505,13 @@ Future<Option<int>> MesosContainerizerProcess::reap(
       // Determine if we just reaped a legacy container or a
       // non-legacy container. We do this by checking for the
       // existence of the container runtime directory (which only
-      // exists for new (i.e. non-legacy) containers). If it is a
+      // exists non-legacy) containers). If it is a
       // legacy container, we simply forward the reaped exit status
       // back to the caller.
       const string runtimePath =
         containerizer::paths::getRuntimePath(flags.runtime_dir, containerId);
 
+	  LOG(INFO) << "MesosContainerizerProcess::reap  1111111" << runtimePath;
       if (!os::exists(runtimePath)) {
         return status;
       }
@@ -2458,8 +2527,12 @@ Future<Option<int>> MesosContainerizerProcess::reap(
         return Failure("Failed to get container status: " +
                        containerStatus.error());
       } else if (containerStatus.isSome()) {
-        return containerStatus.get();
+		containerStatus.get();
+
+		LOG(INFO) << "MesosContainerizerProcess::reap  end";
+		return containerStatus.get();
       }
+	  LOG(INFO) << "MesosContainerizerProcess::reap  end";
 
       // If there isn't a container status file or it is empty, then the
       // init process must have been interrupted by a SIGKILL before
@@ -2469,11 +2542,14 @@ Future<Option<int>> MesosContainerizerProcess::reap(
 #endif // __WINDOWS__
 }
 
+//对应reap对应本文件中的Future<Option<int>> MesosContainerizerProcess::reap  reaped对应MesosContainerizerProcess::reaped
 
+//判重  //MesosContainerizerProcess::__recover      MesosContainerizerProcess::_launch中会执行该判重函数
 void MesosContainerizerProcess::reaped(const ContainerID& containerId)
 {
+  LOG(INFO) << "MesosContainerizerProcess::reaped"; //yang add
   if (!containers_.contains(containerId)) {
-    return;
+  	return;
   }
 
   LOG(INFO) << "Container " << containerId << " has exited";

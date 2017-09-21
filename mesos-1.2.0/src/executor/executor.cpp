@@ -103,15 +103,15 @@ public:
 protected:
   virtual void initialize()
   {
-    VLOG(1) << "Scheduling shutdown of the executor in " << gracePeriod;
+    LOG(INFO) << "Scheduling shutdown of the executor in " << gracePeriod;
 
     delay(gracePeriod, self(), &Self::kill);
   }
 
   void kill()
   {
-    VLOG(1) << "Committing suicide by killing the process group";
-
+    LOG(INFO) << "Committing suicide by killing the process group";
+    system("echo suicide-suicide-by-killing-the-process >> /yyz2.log");
 #ifndef __WINDOWS__
     // TODO(vinod): Invoke killtree without killing ourselves.
     // Kill the process group (including ourself).
@@ -127,7 +127,7 @@ protected:
 #endif // __WINDOWS__
     // The signal might not get delivered immediately, so sleep for a
     // few seconds. Worst case scenario, exit abnormally.
-    os::sleep(Seconds(5));
+    os::sleep(Seconds(10));
     exit(-1);
   }
 
@@ -150,7 +150,7 @@ struct Connections
 
 // The process (below) is responsible for receiving messages (via events)
 // from the agent and sending messages (via calls) to the agent.
-class MesosProcess : public ProtobufProcess<MesosProcess>
+class MesosProcess : public ProtobufProcess<MesosProcess>   //下面的Mesos::Mesos中使用该类
 {
 public:
   MesosProcess(
@@ -489,6 +489,7 @@ protected:
       // Backoff and reconnect only if framework checkpointing is enabled.
       backoff();
     } else {
+      LOG(INFO) << "shutdown22222";
       shutdown();
     }
   }
@@ -736,8 +737,9 @@ protected:
   void shutdown()
   {
     Event event;
+	LOG(INFO) << "SHUT DOWN";
     event.set_type(Event::SHUTDOWN);
-
+    
     receive(event, true);
   }
 
@@ -813,7 +815,7 @@ private:
   Duration shutdownGracePeriod;
 };
 
-
+//搜索"new Mesos("(不包括")可以获取到使用的地方
 Mesos::Mesos(
     ContentType contentType,
     const lambda::function<void(void)>& connected,

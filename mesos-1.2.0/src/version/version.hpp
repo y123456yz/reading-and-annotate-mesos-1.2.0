@@ -54,6 +54,7 @@ inline JSON::Object version()
 }
 
 
+//slave中的main.cpp中会用到new VersionProcess()
 class VersionProcess : public process::Process<VersionProcess>
 {
 public:

@@ -26,6 +26,9 @@ std::function<void(int, int)>* signaledWrapper = nullptr;
 
 void signalHandler(int sig, siginfo_t* siginfo, void* context)
 {
+  LOG(INFO) << "signalHandler sig:" << sig;
+  printf("signalHandler signaledWrapper\r\n");
+  
   if (signaledWrapper != nullptr) {
      (*signaledWrapper)(sig, siginfo->si_uid);
   }

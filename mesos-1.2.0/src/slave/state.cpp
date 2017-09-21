@@ -57,6 +57,7 @@ using std::max;
 using std::string;
 
 
+//Slave::initialize中调用执行
 Try<State> recover(const string& rootDir, bool strict)
 {
   LOG(INFO) << "Recovering state from '" << rootDir << "'";
@@ -108,7 +109,7 @@ Try<State> recover(const string& rootDir, bool strict)
     return state;
   }
 
-  // Get the latest slave id.
+  // Get the latest slave id. work-mesos/meta/slaves/latest -> ./work-mesos/meta/slaves/fba6e290-5566-420e-8489-1dc87ddfdc93-S18
   Result<string> directory = os::realpath(latest);
   if (!directory.isSome()) {
     return Error("Failed to find latest agent: " +
@@ -254,7 +255,7 @@ Try<FrameworkState> FrameworkState::recover(
     return state;
   }
 
-  Try<string> pid = os::read(path);
+  Try<string> pid = os::read(path);  //mesos-agent重启的时候从meta路径恢复，赋值见FrameworkState::recover
 
   if (pid.isError()) {
     message =
@@ -276,7 +277,7 @@ Try<FrameworkState> FrameworkState::recover(
     return state;
   }
 
-  state.pid = process::UPID(pid.get());
+  state.pid = process::UPID(pid.get());  //mesos-agent重启的时候从meta路径恢复，赋值见FrameworkState::recover
 
   // Find the executors.
   Try<list<string>> executors =
@@ -693,7 +694,7 @@ Try<TaskState> TaskState::recover(
   return state;
 }
 
-
+//Try<State> recover 中执行
 Try<ResourcesState> ResourcesState::recover(
     const string& rootDir,
     bool strict)
@@ -701,7 +702,7 @@ Try<ResourcesState> ResourcesState::recover(
   ResourcesState state;
 
   // Process the committed resources.
-  const string& infoPath = paths::getResourcesInfoPath(rootDir);
+  const string& infoPath = paths::getResourcesInfoPath(rootDir); //  meta/resources/resources.info
   if (!os::exists(infoPath)) {
     LOG(INFO) << "No committed checkpointed resources found at '"
               << infoPath << "'";

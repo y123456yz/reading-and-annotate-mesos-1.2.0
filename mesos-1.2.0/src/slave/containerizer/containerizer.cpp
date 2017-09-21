@@ -214,6 +214,10 @@ Try<Containerizer*> Containerizer::create(
   const vector<string> _types = strings::split(flags.containerizers, ",");
   const set<string> containerizerTypes(_types.begin(), _types.end());
 
+  //for(vector<string>::iterator i = _types.begin(); i != _types.end(); ++i) {
+	// LOG(INFO) << "yang test: " << flags.containerizers ; yang test: mesos
+  //}
+
   if (containerizerTypes.size() != _types.size()) {
     return Error("Duplicate entries found in --containerizer flag"
                  " '" + flags.containerizers + "'");
@@ -231,6 +235,7 @@ Try<Containerizer*> Containerizer::create(
     // `gpu/nvidia` isolator flag set before creating these components.
     bool shouldCreate = false;
 
+	
     if (containerizerTypes.count("docker") > 0) {
       shouldCreate = true;
     } else if (containerizerTypes.count("mesos") > 0) {
@@ -242,6 +247,7 @@ Try<Containerizer*> Containerizer::create(
       }
     }
 
+	LOG(INFO) << "yang test shouldCreate: " << shouldCreate ;
     if (shouldCreate) {
       Try<Resources> gpus = NvidiaGpuAllocator::resources(flags);
 
@@ -276,7 +282,7 @@ Try<Containerizer*> Containerizer::create(
   vector<Containerizer*> containerizers;
 
   foreach (const string& type, containerizerTypes) {
-    if (type == "mesos") {
+    if (type == "mesos") { //¥Ú”°÷¥––¡ÀMesosContainerizer::create
       Try<MesosContainerizer*> containerizer =
         MesosContainerizer::create(flags, local, fetcher, nvidia);
       if (containerizer.isError()) {
@@ -316,3 +322,4 @@ Try<Containerizer*> Containerizer::create(
 } // namespace slave {
 } // namespace internal {
 } // namespace mesos {
+

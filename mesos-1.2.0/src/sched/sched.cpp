@@ -186,6 +186,20 @@ private:
 // we allow friend functions to invoke 'send', 'post', etc. Therefore,
 // we must make sure that any necessary synchronization is performed.
 
+/* 
+Apache Mesos的任务分配过程:
+步骤1 当出现以下几种事件中的一种时，会触发资源分配行为：新框架注册、框架注销、增加节点、出现空闲资源等；
+步骤2 Mesos Master中的Allocator模块为某个框架分配资源，并将资源封装到ResourceOffersMessage（Protocal Buffer Message）中，通过网络传输给SchedulerProcess；
+步骤3 SchedulerProcess调用用户编写的Scheduler中的resourceOffers函数（不能版本可能有变动），告之有新资源可用；
+步骤4 用户的Scheduler调用MesosSchedulerDriver中的launchTasks()函数，告之将要启动的任务；
+步骤5 SchedulerProcess将待启动的任务封装到LaunchTasksMessage（Protocal Buffer Message）中，通过网络传输给Mesos Master；
+步骤6 Mesos Master将待启动的任务封装成RunTaskMessage发送给各个Mesos Slave；
+步骤7 Mesos Slave收到RunTaskMessage消息后，将之进一步发送给对应的ExecutorProcess；
+步骤8 ExecutorProcess收到消息后，进行资源本地化，并准备任务运行环境，最终调用用户编写的Executor中的launchTask启动任务（如果Executor尚未启动，则先要启动Executor）。
+*/
+
+//SchedulerProcess线程对应MesosSchedulerDriver处理  ExecutorProcess线程对应MesosExecutorDriver处理
+//参考http://dongxicheng.org/apache-mesos/apache-mesos-task-assignment/
 class SchedulerProcess : public ProtobufProcess<SchedulerProcess>
 {
 public:
@@ -238,7 +252,16 @@ public:
   }
 
 protected:
-  virtual void initialize()
+  /*
+  SchedulerProcess的initialize()函数 
+  里面主要注册消息处理函数。
+  */
+  //http://dongxicheng.org/apache-mesos/apache-mesos-communications/
+  //scheduler的消息类型及处理函数(SchedulerProcess::initialize)
+  //Executor的消息类型及处理函数(ExecutorProcess)
+  // Mesos-Slave的消息类型及处理函数(Slave::initialize)
+  // Mesos-master的消息类型及处理函数(Master::initialize)
+  virtual void initialize() //scheduler的消息类型及处理函数(SchedulerProcess)
   {
     install<Event>(&SchedulerProcess::receive);
 
@@ -873,6 +896,15 @@ protected:
         delay, self(), &Self::doReliableRegistration, maxBackoff * 2);
   }
 
+  /*
+  Allocator的initialize函数中，传入的OfferCallback是Master::offer。 
+  每过allocation_interval，Allocator都会计算每个framework的offer，然后依次调用Master::offer，
+  将资源offer给相应的framework
+  在Master::offer函数中，生成如下的ResourceOffersMessage，并且发送给Framework。
+  对应到这里当Driver收到ResourceOffersMessage的消息的时候，会调用SchedulerProcess::resourceOffers
+
+  最终调用了Framework的resourceOffers。
+  */
   void resourceOffers(
       const UPID& from,
       const vector<Offer>& offers,
@@ -1260,6 +1292,7 @@ protected:
     CHECK(framework.has_id());
     call.mutable_framework_id()->CopyFrom(framework.id());
     call.set_type(Call::KILL);
+	LOG(INFO) << "event TASK:taskId";
 
     Call::Kill* kill = call.mutable_kill();
     kill->mutable_task_id()->CopyFrom(taskId);
@@ -1920,7 +1953,7 @@ Status MesosSchedulerDriver::start()
       return status;
     }
 
-    if (detector == nullptr) {
+    if (detector == nullptr) { //首先检测Mesos-Master的leader
       Try<shared_ptr<MasterDetector>> detector_ = DetectorPool::get(url);
 
       if (detector_.isError()) {
@@ -1980,7 +2013,11 @@ Status MesosSchedulerDriver::start()
     }
 
     CHECK(process == nullptr);
-
+	/*
+	创建一个线程。
+	SchedulerProcess的initialize()函数
+	里面主要注册消息处理函数。
+    */
     if (credential == nullptr) {
       process = new SchedulerProcess(
           this,
@@ -2008,7 +2045,7 @@ Status MesosSchedulerDriver::start()
           latch);
     }
 
-    spawn(process);
+    spawn(process); 
 
     return status = DRIVER_RUNNING;
   }

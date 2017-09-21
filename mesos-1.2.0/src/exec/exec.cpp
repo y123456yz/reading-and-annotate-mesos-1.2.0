@@ -80,29 +80,54 @@ namespace internal {
 // TODO(bmahler): Update 'delay' to handle deferred callbacks without
 // needing a Process. This would eliminate the need for an explicit
 // Process here, see: MESOS-4729.
-class ShutdownProcess : public Process<ShutdownProcess>
+class ShutdownProcess : public Process<ShutdownProcess> 
+//下面的spawn(new ShutdownProcess(shutdownGracePeriod), true);中构造   //继承libprocess的Process类，
 {
 public:
   explicit ShutdownProcess(const Duration& _gracePeriod)
     : ProcessBase(ID::generate("exec-shutdown")),
-      gracePeriod(_gracePeriod) {}
+      gracePeriod(_gracePeriod) {
+
+      LOG(INFO) << "ShutdownProcess";
+	  system(" echo ShutdownProcess >> /yyz2.log");
+  }
 
 protected:
-  virtual void initialize()
+  virtual void initialize()  //从下面的new ShutdownProcess(shutdownGracePeriod)执行这里
   {
-    VLOG(1) << "Scheduling shutdown of the executor in " << gracePeriod;
+    LOG(INFO) << "Scheduling shutdown of the executor in " << gracePeriod;
 
+	system("echo received--event-initialize >> /yyz2.log");
     delay(gracePeriod, self(), &Self::kill);
   }
 
-  void kill()
+  void kill() //从上面的initialize调用kill，延迟gracePeriod(5S)执行
   {
-    VLOG(1) << "Committing suicide by killing the process group";
+    char buf[100];
+    /*
+	root	  6166 14199  5 13:20 pts/1    00:00:00 /home/yangyazhou/mesos-1.2.0/src/.libs/lt-mesos-agent --master=172.23.133.32:5050 --work_dir=./work-mesos --log_dir=/var/log/mesos
+	root	  6206	6166  1 13:20 ? 	   00:00:00 /home/yangyazhou/mesos-1.2.0/src/.libs/lt-mesos-containerizer launch
+	root	  6247	6206  0 13:20 ? 	   00:00:00 sh -c java -cp /vagrant/example-framework-1.0-SNAPSHOT-jar-with-dependencies.jar org.opencredo.mesos.ExampleExecutor > /yyz.log
+	root	  6248	6247  0 13:20 ? 	   00:00:00 java -cp /vagrant/example-framework-1.0-SNAPSHOT-jar-with-dependencies.jar org.opencredo.mesos.ExampleExecutor
+	yangyazhou-test--process-group-execute32-pid:6248-pgid:6206
+	*/
+
+	snprintf(buf, 100, "echo yangyazhou-test--process-group-execute32233-pid:%d-pgid:%d >> /yyz2.log", 
+		getpid(), getpgid(0));
+    system("echo yangyazhou-test-Committing-suicide-by-killing-the-process-group::execute3-333 >> /yyz2.log");
+    system(buf);
+	
+    LOG(INFO) << "Committing suicide by killing the process group";
 
     // TODO(vinod): Invoke killtree without killing ourselves.
     // Kill the process group (including ourself).
 #ifndef __WINDOWS__
-    killpg(0, SIGKILL);
+    /*
+    killpg() sends the signal sig to the process group pgrp. See signal(7) for a list of signals. 
+    If pgrp is 0, killpg() sends the signal to the sending process’s process group.
+    (POSIX says: If pgrp is less than or equal to 1, the behaviour is undefined.)
+    */
+    killpg(0, SIGKILL); //yang add test   ps  xao pid,ppid,pgid,sid  | grep 13916 查看进程组
 #else
     LOG(WARNING) << "Shutting down process group. Windows does not support "
                     "`killpg`, so we simply call `exit` on the assumption "
@@ -123,9 +148,34 @@ private:
   const Duration gracePeriod;
 };
 
+/* 
+Apache Mesos的任务分配过程: http://dongxicheng.org/apache-mesos/apache-mesos-task-assignment/
+步骤1 当出现以下几种事件中的一种时，会触发资源分配行为：新框架注册、框架注销、增加节点、出现空闲资源等；
+步骤2 Mesos Master中的Allocator模块为某个框架分配资源，并将资源封装到ResourceOffersMessage（Protocal Buffer Message）中，SchedulerProcess通过网络传输给用户；
+步骤3 SchedulerProcess调用用户编写的Scheduler中的resourceOffers函数（不能版本可能有变动），告之有新资源可用；
+步骤4 用户的Scheduler调用MesosSchedulerDriver中的launchTasks()函数，告之将要启动的任务；
+步骤5 SchedulerProcess将待启动的任务封装到LaunchTasksMessage（Protocal Buffer Message）中，通过网络传输给Mesos Master；
+步骤6 Mesos Master将待启动的任务封装成RunTaskMessage发送给各个Mesos Slave；
+步骤7 Mesos Slave收到RunTaskMessage消息后，将之进一步发送给对应的ExecutorProcess；
+步骤8 ExecutorProcess收到消息后，进行资源本地化，并准备任务运行环境，最终调用用户编写的Executor中的launchTask启动任务（如果Executor尚未启动，则先要启动Executor）。
+*/
 
+/*
+  Executor注册过程  http://dongxicheng.org/apache-mesos/apache-mesos-framework-executor-registering/
+本节描述框架frameworkX在某个slaveX上注册executor executorX的过程：
+（1）Master第一次向slaveX发送执行frameworkX中task的消息 RunTaskMessage
+（2）slave收到该消息后，运行相应的消息处理函数runTask()
+（3）该函数发现该slave上未启动frameworkX对应的executorX，则调用IsolationModule的lauchExecutor()函数
+（4）该函数创建一个FrameworkExecutor对象，并调用ExecutorProcess的Initialize()函数进行初始化，同时启动TaskTracker
+（5）Initialize()函数创建消息RegisterExecutorMessage，并发送给slave
+（6）Slave收到该消息后，调用对象的消息处理函数registerExecutor，该函数创建ExecutorRegisteredMessage消息，返回给ExecutorProcess
+（7）ExecutorProcess收到该消息后，调用对应的消息处理函数registered()，该函数再进一步调用FrameworkExecutor的registered()函数
+*/
+
+//SchedulerProcess线程对应MesosSchedulerDriver处理  ExecutorProcess线程对应MesosExecutorDriver处理
+//参考http://dongxicheng.org/apache-mesos/apache-mesos-task-assignment/
 class ExecutorProcess : public ProtobufProcess<ExecutorProcess>
-{
+{  //MesosExecutorDriver::start 中new该对象，该对象中的报文处理是scheduler->mesos-master->mesos-slave->executor调用走到这里解析到
 public:
   ExecutorProcess(
       const UPID& _slave,
@@ -159,9 +209,24 @@ public:
       recoveryTimeout(_recoveryTimeout),
       shutdownGracePeriod(_shutdownGracePeriod)
   {
+    char buf[100];
+	snprintf(buf, 100, "echo ExecutorProcess-checkpoint:%d >> /yyz2.log", checkpoint); //scheduler如果设置了checkpoint，这里为1打印
+    system(buf);
+	snprintf(buf, 100, "echo ExecutorProcess-local:%d >> /yyz2.log", local); //scheduler如果设置了checkpoint，这里为1打印
+    system(buf);
+	
     LOG(INFO) << "Version: " << MESOS_VERSION;
+	//http://dongxicheng.org/apache-mesos/apache-mesos-communications/
+	//scheduler的消息类型及处理函数(SchedulerProcess::initialize)
+	  //Executor的消息类型及处理函数(ExecutorProcess)
+	  // Mesos-Slave的消息类型及处理函数(Slave::initialize)
+	  // Mesos-master的消息类型及处理函数(Master::initialize)
 
-    install<ExecutorRegisteredMessage>(
+	//报文处理是scheduler->mesos-master->mesos-slave->executor调用走到这里解析到
+
+	//executor注册报文
+	//报文处理是scheduler->mesos-master->mesos-slave->executor调用走到这里解析到
+    install<ExecutorRegisteredMessage>( 
         &ExecutorProcess::registered,
         &ExecutorRegisteredMessage::executor_info,
         &ExecutorRegisteredMessage::framework_id,
@@ -178,10 +243,11 @@ public:
         &ExecutorProcess::reconnect,
         &ReconnectExecutorMessage::slave_id);
 
+	//运行某个task
     install<RunTaskMessage>(
         &ExecutorProcess::runTask,
         &RunTaskMessage::task);
-
+    //杀死task报文
     install<KillTaskMessage>(
         &ExecutorProcess::killTask,
         &KillTaskMessage::task_id);
@@ -192,7 +258,7 @@ public:
         &StatusUpdateAcknowledgementMessage::framework_id,
         &StatusUpdateAcknowledgementMessage::task_id,
         &StatusUpdateAcknowledgementMessage::uuid);
-
+    //framework向executor发送的报文，比如杀掉某个task等
     install<FrameworkToExecutorMessage>(
         &ExecutorProcess::frameworkMessage,
         &FrameworkToExecutorMessage::slave_id,
@@ -200,6 +266,7 @@ public:
         &FrameworkToExecutorMessage::executor_id,
         &FrameworkToExecutorMessage::data);
 
+	//某个executor关闭
     install<ShutdownExecutorMessage>(
         &ExecutorProcess::shutdown);
   }
@@ -337,12 +404,12 @@ protected:
   void killTask(const TaskID& taskId)
   {
     if (aborted.load()) {
-      VLOG(1) << "Ignoring kill task message for task " << taskId
+      LOG(INFO) << "Ignoring kill task message for task " << taskId
               << " because the driver is aborted!";
       return;
     }
 
-    VLOG(1) << "Executor asked to kill task '" << taskId << "'";
+    LOG(INFO) << "Executor asked to kill task '" << taskId << "'";
 
     Stopwatch stopwatch;
     if (FLAGS_v >= 1) {
@@ -351,7 +418,7 @@ protected:
 
     executor->killTask(driver, taskId);
 
-    VLOG(1) << "Executor::killTask took " << stopwatch.elapsed();
+    LOG(INFO) << "Executor::killTask took " << stopwatch.elapsed();
   }
 
   void statusUpdateAcknowledgement(
@@ -393,7 +460,7 @@ protected:
       return;
     }
 
-    VLOG(1) << "Executor received framework message";
+    LOG(INFO) << "Executor received framework message";
 
     Stopwatch stopwatch;
     if (FLAGS_v >= 1) {
@@ -402,11 +469,13 @@ protected:
 
     executor->frameworkMessage(driver, data);
 
-    VLOG(1) << "Executor::frameworkMessage took " << stopwatch.elapsed();
+    LOG(INFO)  << "Executor::frameworkMessage took " << stopwatch.elapsed();
   }
 
   void shutdown()
   {
+    
+	LOG(INFO) << "Executor::shutdown took";
     if (aborted.load()) {
       VLOG(1) << "Ignoring shutdown message because the driver is aborted!";
       return;
@@ -414,6 +483,7 @@ protected:
 
     LOG(INFO) << "Executor asked to shutdown";
 
+	system("echo exec-cpp-shutdown >> /yyz2.log");
     if (!local) {
       // Start the Shutdown Process.
       spawn(new ShutdownProcess(shutdownGracePeriod), true);
@@ -427,7 +497,7 @@ protected:
     // TODO(benh): Any need to invoke driver.stop?
     executor->shutdown(driver);
 
-    VLOG(1) << "Executor::shutdown took " << stopwatch.elapsed();
+    LOG(INFO)  << "Executor::shutdown took " << stopwatch.elapsed();
 
     aborted.store(true); // To make sure not to accept any new messages.
 
@@ -472,8 +542,31 @@ protected:
     }
   }
 
-  virtual void exited(const UPID& pid)
+/*
+   * Invoked when a linked process has exited.
+   *
+   * For local linked processes (i.e., when the linker and linkee are
+   * part of the same OS process), this can be used to reliably detect
+   * when the linked process has exited.
+   *
+   * For remote linked processes, this indicates that the persistent
+   * TCP connection between the linker and the linkee has failed
+   * (e.g., linkee process died, a network error occurred). In this
+   * situation, the remote linkee process might still be running.
+   *
+   * @see process::ProcessBase::link
+  virtual void exited(const UPID&) {}
+参考libprocess exited说明，如果tcp链接失败，则会触发执行exited，test-executor程序是由mesos-containerizer launch进程骑起来，但是
+test-executor进程是直接和mesos-slave通信的，如果mesos-slave挂掉，或者网络问题，就会触发test-executor执行exited函数
+*/
+
+  //exec和相关的日志记录在work-mesos/slaves/fba6e290-5566-420e-8489-1dc87ddfdc93-S19/frameworks
+   // /fba6e290-5566-420e-8489-1dc87ddfdc93-0006/executors/ExampleExecutor/runs/a170553e-be2b-4cb8-a953-e7630459c22f/ stderr  stdout 
+   //见https://issues.apache.org/jira/browse/MESOS-7885?filter=-2
+
+  virtual void exited(const UPID& pid) //和mesos-slave TCP异常，则通过libprocess的exited(event.pid)走到这里
   {
+    system("echo yang-exited >> /yyz2.log");
     if (aborted.load()) {
       VLOG(1) << "Ignoring exited event because the driver is aborted!";
       return;
@@ -482,14 +575,17 @@ protected:
     // If the framework has checkpointing enabled and the executor has
     // successfully registered with the slave, the slave can reconnect with
     // this executor when it comes back up and performs recovery!
-    if (checkpoint && connected) {
+
+	//如果framwork scheduler的checkpoint打开，则不会走下面的shutdown流程
+    if (checkpoint && connected) { 
       connected = false;
 
       LOG(INFO) << "Agent exited, but framework has checkpointing enabled. "
                 << "Waiting " << recoveryTimeout << " to reconnect with agent "
                 << slaveId;
 
-      delay(recoveryTimeout, self(), &Self::_recoveryTimeout, connection);
+	  system("echo recoveryTimeout-yang-exited-checkpoint >> /yyz2.log");
+      delay(recoveryTimeout, self(), &Self::_recoveryTimeout, connection); //延迟重连
 
       return;
     }
@@ -500,6 +596,7 @@ protected:
 
     if (!local) {
       // Start the Shutdown Process.
+      system("echo ShutdownProcess-yang-exited >> /yyz2.log");
       spawn(new ShutdownProcess(shutdownGracePeriod), true);
     }
 
@@ -508,10 +605,12 @@ protected:
       stopwatch.start();
     }
 
+	
     // TODO(benh): Pass an argument to shutdown to tell it this is abnormal?
     executor->shutdown(driver);
+	system("echo ShutdownProcess-yang-shutdown end>> /yyz2.log");
 
-    VLOG(1) << "Executor::shutdown took " << stopwatch.elapsed();
+    LOG(INFO) << "Executor::shutdown took " << stopwatch.elapsed();
 
     aborted.store(true); // To make sure not to accept any new messages.
 
@@ -523,6 +622,8 @@ protected:
     if (local) {
       terminate(this);
     }
+	
+	system("echo ShutdownProcess-yang-terminate end>> /yyz2.log");
   }
 
   void sendStatusUpdate(const TaskStatus& status)
@@ -582,7 +683,7 @@ private:
   std::recursive_mutex* mutex;
   Latch* latch;
   const string directory;
-  bool checkpoint;
+  bool checkpoint; //如果framwork的scheduler设置了checkpoint，则这里会为1
   Duration recoveryTimeout;
   Duration shutdownGracePeriod;
 
@@ -599,10 +700,12 @@ private:
 } // namespace mesos {
 
 
-// Implementation of C++ API.
+//SchedulerProcess线程对应MesosSchedulerDriver处理  ExecutorProcess线程对应MesosExecutorDriver处理
+//参考http://dongxicheng.org/apache-mesos/apache-mesos-task-assignment/
 
-
-MesosExecutorDriver::MesosExecutorDriver(mesos::Executor* _executor)
+// Implementation of C++ API.  Executor的运行主要依赖于MesosExecutorDriver作为封装，和mesos-slave进行通信。
+MesosExecutorDriver::MesosExecutorDriver(mesos::Executor* _executor)  
+//executor程序(例如test-executor)会用该类做封装链接mesos-slave
   : executor(_executor),
     process(nullptr),
     latch(nullptr),
@@ -642,7 +745,6 @@ MesosExecutorDriver::MesosExecutorDriver(mesos::Executor* _executor)
   spawn(new VersionProcess(), true);
 }
 
-
 MesosExecutorDriver::~MesosExecutorDriver()
 {
   // Just like with the MesosSchedulerDriver it's possible to get a
@@ -655,12 +757,11 @@ MesosExecutorDriver::~MesosExecutorDriver()
   delete latch;
 }
 
-
 Status MesosExecutorDriver::start()
 {
   synchronized (mutex) {
     if (status != DRIVER_NOT_STARTED) {
-      return status;
+         return status;
     }
 
     // Set stream buffering mode to flush on newlines so that we
@@ -701,7 +802,7 @@ Status MesosExecutorDriver::start()
     }
 
     slave = UPID(value.get());
-    CHECK(slave) << "Cannot parse MESOS_SLAVE_PID '" << value.get() << "'";
+    //CHECK(slave) << "Cannot parse MESOS_SLAVE_PID '" << value.get() << "'";
 
     // Get slave ID from environment.
     value = os::getenv("MESOS_SLAVE_ID");
@@ -754,6 +855,7 @@ Status MesosExecutorDriver::start()
     }
 
     // Get checkpointing status from environment.
+    //参考https://mesos-cn.gitbooks.io/mesos-cn/content/document/runing-Mesos/Slave-Recovery.html
     value = os::getenv("MESOS_CHECKPOINT");
     checkpoint = value.isSome() && value.get() == "1";
 
@@ -873,7 +975,6 @@ Status MesosExecutorDriver::run()
   Status status = start();
   return status != DRIVER_RUNNING ? status : join();
 }
-
 
 Status MesosExecutorDriver::sendStatusUpdate(const TaskStatus& taskStatus)
 {

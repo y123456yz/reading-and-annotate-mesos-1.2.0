@@ -148,6 +148,9 @@ static void signalHandler(int sig)
 {
   // If we dn't yet have a container pid, we treat
   // receiving a signal like a failure and exit.
+  char buf[100];
+  snprintf(buf, 100, "echo \"yang test ....signalHandler....... sig:%d  pid:%d\" >> /yyz2.log", (int)sig, containerPid.get());
+  system(buf);
   if (containerPid.isNone()) {
     exitWithSignal(sig);
   }
@@ -157,14 +160,20 @@ static void signalHandler(int sig)
   // signal safe. The only possible error scenario relevant to us is
   // ESRCH, but if that happens that means our pid is already gone and
   // the process will exit soon. So we are safe.
+  printf("yang test ........... sig:%d\r\n", (int)sig);
+  LOG(INFO) << "yang test signalHandler" <<" sig:" << sig << " pid:" << containerPid.get();
   os::kill(containerPid.get(), sig);
 }
 
-
+//MesosContainerizerLaunch::execute中执行
 static Try<Nothing> installSignalHandlers()
 {
   // Install handlers for all standard POSIX signals
   // (i.e. any signal less than `NSIG`).
+  LOG(INFO) << "installSignalHandlers";
+  printf ( "installSignalHandlers");
+  
+  system("echo MesosContainerizerLaunch::execute3-installSignalHandlers >> /yyz2.log");
   for (int i = 1; i < NSIG; i++) {
     // We don't want to forward the SIGCHLD signal, nor do we want to
     // handle it ourselves because we reap all children inline in the
@@ -212,6 +221,8 @@ static void exitWithSignal(int sig)
     os::close(containerStatusFd.get());
   }
 #endif // __WINDOWS__
+  system("echo MesosContainerizerLaunch::execute3-exitWithSignal >> /yyz2.log");
+
   ::_exit(EXIT_FAILURE);
 }
 
@@ -224,17 +235,28 @@ static void exitWithStatus(int status)
     os::close(containerStatusFd.get());
   }
 #endif // __WINDOWS__
+  system("echo MesosContainerizerLaunch::execute3-exitWithStatus >> /yyz2.log");
+
   ::_exit(status);
 }
 
+//mesos-containerizer的main函数在src/slave/containerizer/mesos/main.cpp
+//参考http://blog.csdn.net/popsuper1982/article/details/52139044
+int MesosContainerizerLaunch::execute() //MesosContainerizerLaunch::execute()函数最终调用对应的task二进制文件运行
+{   //MesosContainerizerProcess::exec通过pipe触发执行相应的task任务  
 
-int MesosContainerizerLaunch::execute()
-{
+
+  //exec和相关的日志记录在work-mesos/slaves/fba6e290-5566-420e-8489-1dc87ddfdc93-S19/frameworks
+  // /fba6e290-5566-420e-8489-1dc87ddfdc93-0006/executors/ExampleExecutor/runs/a170553e-be2b-4cb8-a953-e7630459c22f/ stderr  stdout 
+  //见https://issues.apache.org/jira/browse/MESOS-7885?filter=-2
   if (flags.help) {
     cerr << flags.usage();
     return EXIT_SUCCESS;
-  }
+  } 
+  cout << "11111111111111111111111111111111111111" << endl;
 
+  LOG(INFO) << "MesosContainerizerLaunch::execute 2";
+  system("echo MesosContainerizerLaunch::execute3 >> /yyz2.log");
 #ifndef __WINDOWS__
   // The existence of the `runtime_directory` flag implies that we
   // want to checkpoint the container's status upon exit.
@@ -275,14 +297,14 @@ int MesosContainerizerLaunch::execute()
   }
 #endif // __WINDOWS__
 
-  if (flags.launch_info.isNone()) {
+  if (flags.launch_info.isNone()) { //会从mesos-slave父进程继承过来，见mesos-slave中日志:Launching 'mesos-containerizer' with flags
     cerr << "Flag --launch_info is not specified" << endl;
     exitWithStatus(EXIT_FAILURE);
   }
 
   Try<ContainerLaunchInfo> _launchInfo =
     ::protobuf::parse<ContainerLaunchInfo>(flags.launch_info.get());
-
+  
   if (_launchInfo.isError()) {
     cerr << "Failed to parse launch info: " << _launchInfo.error() << endl;
     exitWithStatus(EXIT_FAILURE);
@@ -366,8 +388,10 @@ int MesosContainerizerLaunch::execute()
       exitWithStatus(EXIT_FAILURE);
     }
 
-    cout << "Executing pre-exec command '"
-         << JSON::protobuf(command) << "'" << endl;
+    LOG(INFO) << "Executing pre-exec command '"
+         << JSON::protobuf(command) << "'" ;   //打印启动的命令信息
+	cout << "Executing pre-exec command '"
+			<< JSON::protobuf(command) << "'" << endl;
 
     int status = 0;
 
@@ -385,7 +409,7 @@ int MesosContainerizerLaunch::execute()
       status = os::spawn(command.value(), args);
     }
 
-    if (!WSUCCEEDED(status)) {
+    if (!WSUCCEEDED(status)) { //判断command程序是否正常启动
       cerr << "Failed to execute pre-exec command '"
            << JSON::protobuf(command) << "': "
            << WSTRINGIFY(status)
@@ -755,6 +779,7 @@ int MesosContainerizerLaunch::execute()
   }
 
   // If we get here, the execle call failed.
+  system("echo MesosContainerizerLaunch::execute3-Failedtoexecute  >> /yyz2.log");
   cerr << "Failed to execute command: " << os::strerror(errno) << endl;
   exitWithStatus(EXIT_FAILURE);
   UNREACHABLE();

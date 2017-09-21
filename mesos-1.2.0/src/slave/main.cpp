@@ -147,7 +147,7 @@ public:
   Option<string> ip_discovery_command;
 };
 
-
+//mesos-slave的src/slave main.c函数   mesos-containerizer的main函数在src/slave/containerizer/mesos/main.cpp
 int main(int argc, char** argv)
 {
   // The order of initialization is as follows:
@@ -179,7 +179,8 @@ int main(int argc, char** argv)
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::Flags flags;
-
+  printf("yang test 33 1111111111111111111111111111\r\n");
+  //解析命令行参数和环境变量
   Try<flags::Warnings> load = flags.load("MESOS_", argc, argv);
 
   if (flags.help) {
@@ -230,6 +231,7 @@ int main(int argc, char** argv)
   }
 
   os::setenv("LIBPROCESS_PORT", stringify(flags.port));
+  //printf("yang test ........port:%d.. %s\r\n", flags.port, getenv("LIBPROCESS_PORT"));  yang test ........port:5051.. 5051
 
   if (flags.advertise_ip.isSome()) {
     os::setenv("LIBPROCESS_ADVERTISE_IP", flags.advertise_ip.get());
@@ -240,6 +242,8 @@ int main(int argc, char** argv)
   }
 
   // Log build information.
+  //I0731 14:34:51.592353 27210 main.cpp:245] Build: 2017-07-28 14:49:33 by root
+  //I0731 14:34:51.592448 27210 main.cpp:246] Version: 1.2.0
   LOG(INFO) << "Build: " << build::DATE << " by " << build::USER;
   LOG(INFO) << "Version: " << MESOS_VERSION;
 
@@ -251,24 +255,28 @@ int main(int argc, char** argv)
     LOG(INFO) << "Git SHA: " << build::GIT_SHA.get();
   }
 
-  const string id = process::ID::generate("slave"); // Process ID.
+  const string id = process::ID::generate("slave"); // Process ID.  自增ID
 
   // If `process::initialize()` returns `false`, then it was called before this
   // invocation, meaning the authentication realm for libprocess-level HTTP
   // endpoints was set incorrectly. This should be the first invocation.
+
+ 
   if (!process::initialize(
           id,
           READWRITE_HTTP_AUTHENTICATION_REALM,
           READONLY_HTTP_AUTHENTICATION_REALM)) {
     EXIT(EXIT_FAILURE) << "The call to `process::initialize()` in the agent's "
-                       << "`main()` was not the function's first invocation";
+                       << "`main()` was   not the function's first invocation";
   }
 
-  logging::initialize(argv[0], flags, true); // Catch signals.
+  //日志相关初始化  //日志和信号处理相关
+  logging::initialize(argv[0], flags, true); // Catch signals.  日志相关初始化
 
   // Log any flag warnings (after logging is initialized).
   foreach (const flags::Warning& warning, load->warnings) {
-    LOG(WARNING) << warning.message;
+  	//printf("yang test 111111111111\r\n"); //没打出来
+    LOG(WARNING) << "yang test warning:" << warning.message;
   }
 
   spawn(new VersionProcess(), true);
@@ -288,10 +296,15 @@ int main(int argc, char** argv)
       rules.emplace_back(new DisabledEndpointsFirewallRule(paths));
     }
 
+	//如果有参数--firewall_rules则会添加规则
     process::firewall::install(move(rules));
   }
-
+ 
   // Initialize modules.
+  /*
+  ModuleManager::load(flags.modules.get())如果有参数--modules或者--modules_dir=dirpath，
+  则会将路径中的so文件load进来
+  */
   if (flags.modules.isSome() && flags.modulesDir.isSome()) {
     EXIT(EXIT_FAILURE) <<
       flags.usage("Only one of --modules or --modules_dir should be specified");
@@ -328,6 +341,7 @@ int main(int argc, char** argv)
     // terminating.
   }
 
+  //如果有参数--hooks，则加载hook
   // Initialize hooks.
   if (flags.hooks.isSome()) {
     Try<Nothing> result = HookManager::initialize(flags.hooks.get());
@@ -337,8 +351,8 @@ int main(int argc, char** argv)
   }
 
 #ifdef __linux__
-  // Initialize systemd if it exists.
-  if (flags.systemd_enable_support && systemd::exists()) {
+  // Initialize systemd if it exists. //systemd检测处理相关 "mesos_executors.slice"
+  if (flags.systemd_enable_support && systemd::exists()) { //systemd检测相关
     LOG(INFO) << "Inializing systemd state";
 
     systemd::Flags systemdFlags;
@@ -364,6 +378,7 @@ int main(int argc, char** argv)
       << "Failed to create a containerizer: " << containerizer.error();
   }
 
+  //Detect Mesos Master的leader的对象
   Try<MasterDetector*> detector_ = MasterDetector::create(
       flags.master, flags.master_detector);
 
@@ -409,6 +424,8 @@ int main(int argc, char** argv)
   }
 
   Files* files = new Files(READONLY_HTTP_AUTHENTICATION_REALM, authorizer_);
+
+  //垃圾收集器，状态更新器，资源检测器
   GarbageCollector* gc = new GarbageCollector();
   StatusUpdateManager* statusUpdateManager = new StatusUpdateManager(flags);
 
@@ -430,6 +447,7 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
+  //启动slave线程
   Slave* slave = new Slave(
       id,
       flags,

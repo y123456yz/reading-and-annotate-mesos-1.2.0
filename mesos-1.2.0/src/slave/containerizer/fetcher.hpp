@@ -110,7 +110,7 @@ public:
   void kill(const ContainerID& containerId);
 
 private:
-  process::Owned<FetcherProcess> process;
+  process::Owned<FetcherProcess> process; //³õÊ¼»¯¼ûprocess(new FetcherProcess())
 };
 
 

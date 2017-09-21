@@ -65,14 +65,15 @@ struct ProvisionInfo
   Option<::appc::spec::ImageManifest> appcManifest;
 };
 
-
+//MesosContainerizer::create中有创建该类
 class Provisioner
 {
 public:
-  // Create the provisioner based on the specified flags.
+  // Create the provisioner based on the specified flags. 
+  //见Provisioner.cpp中的Provisioner::create
   static Try<process::Owned<Provisioner>> create(const Flags& flags);
 
-  // Available only for testing.
+  // Available only for testing.  
   explicit Provisioner(process::Owned<ProvisionerProcess> process);
 
   // NOTE: Made 'virtual' for mocking and testing.

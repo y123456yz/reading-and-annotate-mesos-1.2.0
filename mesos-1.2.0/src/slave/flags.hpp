@@ -89,7 +89,9 @@ public:
   Duration register_retry_interval_min;
 #ifdef __linux__
   std::string cgroups_hierarchy;
-  std::string cgroups_root;
+  //--cgroups_root=VALUE配置   cgroups_root
+  //默认mesos 也可以带上docker等，这个会影响是使用MesosContainerizerProcess还是DockerContainerizerProcess
+  std::string cgroups_root; 
   bool cgroups_enable_cfs;
   bool cgroups_limit_swap;
   bool cgroups_cpu_enable_pids_and_tids_count;

@@ -44,7 +44,7 @@ namespace process {
  *   2. There are no longer any references to the associated
  *      Subprocess object.
  */
-class Subprocess
+class Subprocess //子进程信息
 {
 public:
   // Forward declarations.
@@ -317,7 +317,7 @@ private:
 #endif // __WINDOWS__
     }
 
-    pid_t pid;
+    pid_t pid; //子进程号
 
 #ifdef __WINDOWS__
     PROCESS_INFORMATION processInformation;

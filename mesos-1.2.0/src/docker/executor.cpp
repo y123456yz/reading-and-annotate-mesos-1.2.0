@@ -172,6 +172,7 @@ public:
         Subprocess::FD(STDOUT_FILENO),
         Subprocess::FD(STDERR_FILENO));
 
+	LOG(INFO) << "launchTask";
     run->onAny(defer(self(), &Self::reaped, lambda::_1));
 
     // Delay sending TASK_RUNNING status update until we receive
@@ -248,7 +249,7 @@ public:
 
   void shutdown(ExecutorDriver* driver)
   {
-    cout << "Shutting down" << endl;
+    LOG(INFO) << "Shutting down";
 
     // Currently, 'docker->run' uses the reaper internally, hence we need
     // to account for the reap interval. We also leave a small buffer of
@@ -391,6 +392,7 @@ private:
 
     // We wait for inspect to finish in order to ensure we send
     // the TASK_RUNNING status update.
+    LOG(INFO) << "reaped";
     inspect
       .onAny(defer(self(), &Self::_reaped, run));
 
@@ -650,6 +652,7 @@ public:
 
   virtual void shutdown(ExecutorDriver* driver)
   {
+    LOG(INFO) << "shutdown ....";
     dispatch(process.get(), &DockerExecutorProcess::shutdown, driver);
   }
 

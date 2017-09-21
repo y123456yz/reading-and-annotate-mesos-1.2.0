@@ -117,6 +117,18 @@ public:
   // Invoked when a framework message has arrived for this executor.
   // These messages are best effort; do not expect a framework message
   // to be retransmitted in any reliable fashion.
+  
+  /*
+	Executor注册过程  http://dongxicheng.org/apache-mesos/apache-mesos-framework-executor-registering/
+  本节描述框架frameworkX在某个slaveX上注册executor executorX的过程：
+  （1）Master第一次向slaveX发送执行frameworkX中task的消息 RunTaskMessage
+  （2）slave收到该消息后，运行相应的消息处理函数runTask()
+  （3）该函数发现该slave上未启动frameworkX对应的executorX，则调用IsolationModule的lauchExecutor()函数
+  （4）该函数创建一个FrameworkExecutor对象，并调用ExecutorProcess的Initialize()函数进行初始化，同时启动TaskTracker
+  （5）Initialize()函数创建消息RegisterExecutorMessage，并发送给slave
+  （6）Slave收到该消息后，调用对象的消息处理函数registerExecutor，该函数创建ExecutorRegisteredMessage消息，返回给ExecutorProcess
+  （7）ExecutorProcess收到该消息后，调用对应的消息处理函数registered()，该函数再进一步调用FrameworkExecutor的registered()函数
+  */
   virtual void frameworkMessage(
       ExecutorDriver* driver,
       const std::string& data) = 0;
@@ -207,7 +219,7 @@ public:
 // "MESOS_QUIET=1".
 //
 // See src/examples/test_executor.cpp for an example of using the
-// MesosExecutorDriver.
+// MesosExecutorDriver.  Executor的运行主要依赖于MesosExecutorDriver作为封装，和mesos-slave进行通信。
 class MesosExecutorDriver : public ExecutorDriver
 {
 public:

@@ -43,7 +43,8 @@ namespace mesos {
 namespace internal {
 namespace slave {
 
-class Launcher
+//LinuxLauncherºÃ≥–∏√¿‡
+class Launcher 
 {
 public:
   virtual ~Launcher() {}

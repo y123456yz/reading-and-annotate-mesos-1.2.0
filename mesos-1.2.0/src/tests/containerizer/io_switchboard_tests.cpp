@@ -906,6 +906,7 @@ TEST_F(IOSwitchboardTest, KillSwitchboardContainerDestroyed)
         flags.runtime_dir, childContainerId);
 
   ASSERT_SOME(pid);
+  LOG(INFO) << "~TEST_F kill ";
 
   ASSERT_EQ(0, os::kill(pid.get(), SIGKILL));
 

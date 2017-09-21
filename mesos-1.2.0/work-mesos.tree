@@ -1,0 +1,357 @@
+.
+├── meta
+│   ├── boot_id
+│   └── slaves
+│       ├── fba6e290-5566-420e-8489-1dc87ddfdc93-S19
+│       │   ├── frameworks
+│       │   │   └── fba6e290-5566-420e-8489-1dc87ddfdc93-0006
+│       │   │       ├── executors
+│       │   │       │   └── ExampleExecutor
+│       │   │       │       ├── executor.info
+│       │   │       │       └── runs
+│       │   │       │           ├── a170553e-be2b-4cb8-a953-e7630459c22f
+│       │   │       │           │   ├── pids
+│       │   │       │           │   │   ├── forked.pid
+│       │   │       │           │   │   └── libprocess.pid
+│       │   │       │           │   └── tasks
+│       │   │       │           │       ├── 0
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 1
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 10
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 100
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 101
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 102
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 103
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 104
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 105
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 106
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 11
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 12
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 13
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 14
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 15
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 16
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 17
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 18
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 19
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 2
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 20
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 21
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 22
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 23
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 24
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 25
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 26
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 27
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 28
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 29
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 3
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 30
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 31
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 32
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 33
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 34
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 35
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 36
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 37
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 38
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 39
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 4
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 40
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 41
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 42
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 43
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 44
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 45
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 46
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 47
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 48
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 49
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 5
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 50
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 51
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 52
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 53
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 54
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 55
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 56
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 57
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 58
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 59
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 6
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 60
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 61
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 62
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 63
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 64
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 65
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 66
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 67
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 68
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 69
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 7
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 70
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 71
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 72
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 73
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 74
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 75
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 76
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 77
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 78
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 79
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 8
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 80
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 81
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 82
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 83
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 84
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 85
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 86
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 87
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 88
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 89
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 9
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 90
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 91
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 92
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 93
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 94
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 95
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 96
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 97
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       ├── 98
+│       │   │       │           │       │   ├── task.info
+│       │   │       │           │       │   └── task.updates
+│       │   │       │           │       └── 99
+│       │   │       │           │           ├── task.info
+│       │   │       │           │           └── task.updates
+│       │   │       │           └── latest -> ./work-mesos/meta/slaves/fba6e290-5566-420e-8489-1dc87ddfdc93-S19/frameworks/fba6e290-5566-420e-8489-1dc87ddfdc93-0006/executors/ExampleExecutor/runs/a170553e-be2b-4cb8-a953-e7630459c22f
+│       │   │       ├── framework.info
+│       │   │       └── framework.pid
+│       │   └── slave.info
+│       └── latest -> ./work-mesos/meta/slaves/fba6e290-5566-420e-8489-1dc87ddfdc93-S19
+├── provisioner
+└── slaves
+    └── fba6e290-5566-420e-8489-1dc87ddfdc93-S19
+        └── frameworks
+            └── fba6e290-5566-420e-8489-1dc87ddfdc93-0006
+                └── executors
+                    └── ExampleExecutor
+                        └── runs
+                            ├── a170553e-be2b-4cb8-a953-e7630459c22f
+                            │   ├── example-framework-1.0-SNAPSHOT-jar-with-dependencies.jar
+                            │   ├── stderr
+                            │   └── stdout
+                            └── latest -> ./work-mesos/slaves/fba6e290-5566-420e-8489-1dc87ddfdc93-S19/frameworks/fba6e290-5566-420e-8489-1dc87ddfdc93-0006/executors/ExampleExecutor/runs/a170553e-be2b-4cb8-a953-e7630459c22f
+
+127 directories, 227 files

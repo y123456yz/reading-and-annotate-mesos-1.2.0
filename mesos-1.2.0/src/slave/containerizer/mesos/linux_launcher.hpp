@@ -28,7 +28,7 @@ namespace slave {
 class LinuxLauncherProcess;
 
 // Launcher for Linux systems with cgroups. Uses a freezer cgroup to
-// track pids.
+// track pids.  LinuxLauncher任务相关
 class LinuxLauncher : public Launcher
 {
 public:
@@ -65,7 +65,7 @@ private:
       const std::string& freezerHierarchy,
       const Option<std::string>& systemdHierarchy);
 
-  process::Owned<LinuxLauncherProcess> process;
+  process::Owned<LinuxLauncherProcess> process; //LinuxLauncherProcess  run kill等函数接口
 };
 
 } // namespace slave {

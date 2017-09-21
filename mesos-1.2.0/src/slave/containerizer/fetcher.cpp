@@ -87,11 +87,11 @@ Fetcher::~Fetcher()
   process::wait(process.get());
 }
 
-
+//检查slave路径meta/slaves/ad75069e-d9e2-4c97-b90e-cc44bc306659-S0是否存在，存在则删除
 Try<Nothing> Fetcher::recover(const SlaveID& slaveId, const Flags& flags)
 {
   // Good enough for now, simple, least-effort recovery.
-  VLOG(1) << "Clearing fetcher cache";
+ // LOG(INFO) << "Clearing fetcher cache";
 
   string cacheDirectory = paths::getSlavePath(flags.fetcher_cache_dir, slaveId);
   Result<string> path = os::realpath(cacheDirectory);
@@ -101,15 +101,17 @@ Try<Nothing> Fetcher::recover(const SlaveID& slaveId, const Flags& flags)
 
     return Error(path.error());
   }
+  LOG(INFO) << "Clearing fetcher cache :" << cacheDirectory;
 
   if (path.isSome() && os::exists(path.get())) {
     Try<Nothing> rmdir = os::rmdir(path.get(), true);
     if (rmdir.isError()) {
       LOG(ERROR) << "Could not delete fetcher cache directory '"
                  << cacheDirectory << "', error: " + rmdir.error();
-
+	
       return rmdir;
     }
+	LOG(INFO) << "rmdir: " << cacheDirectory;
   }
 
   return Nothing();
@@ -282,6 +284,7 @@ void Fetcher::kill(const ContainerID& containerId)
 FetcherProcess::~FetcherProcess()
 {
   foreachkey (const ContainerID& containerId, subprocessPids) {
+  	LOG(INFO) << "~FetcherProcess kill " << containerId;
     kill(containerId);
   }
 }
@@ -911,6 +914,7 @@ Future<Nothing> FetcherProcess::run(
 
 void FetcherProcess::kill(const ContainerID& containerId)
 {
+  LOG(INFO) << "Killing";
   if (subprocessPids.contains(containerId)) {
     VLOG(1) << "Killing the fetcher for container '" << containerId << "'";
     // Best effort kill the entire fetcher tree.

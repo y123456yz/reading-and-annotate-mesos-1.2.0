@@ -471,6 +471,7 @@ PID<Master> launch(const Flags& flags, Allocator* _allocator)
 
 void shutdown()
 {
+  LOG(INFO) << "SHUT DOWN";
   if (master != nullptr) {
     process::terminate(master->self());
     process::wait(master->self());

@@ -142,8 +142,11 @@ private:
   const Flags flags;
   bool paused;
 
+  //赋值见StatusUpdateManagerProcess::forward
   function<void(StatusUpdate)> forward_;
 
+  //StatusUpdateManagerProcess::cleanupStatusUpdateStream中做erase
+  //赋值见StatusUpdateManagerProcess::createStatusUpdateStream
   hashmap<FrameworkID, hashmap<TaskID, StatusUpdateStream*>> streams;
 };
 
@@ -233,7 +236,7 @@ Future<Nothing> StatusUpdateManagerProcess::recover(
       CHECK_SOME(run);
 
       if (run.get().completed) {
-        VLOG(1) << "Skipping recovering updates of"
+        LOG(WARNING) << "Skipping recovering updates of"
                 << " executor '" << executor.id
                 << "' of framework " << framework.id
                 << " because its latest run " << latest.value()
@@ -279,7 +282,7 @@ Future<Nothing> StatusUpdateManagerProcess::recover(
   return Nothing();
 }
 
-
+//frameworkId对应的framework从streams中移除
 void StatusUpdateManagerProcess::cleanup(const FrameworkID& frameworkId)
 {
   LOG(INFO) << "Closing status update streams for framework " << frameworkId;
@@ -374,7 +377,7 @@ Timeout StatusUpdateManagerProcess::forward(
 {
   CHECK(!paused);
 
-  VLOG(1) << "Forwarding update " << update << " to the agent";
+  LOG(INFO) << "Forwarding update " << update << " to the agent";
 
   // Forward the update.
   forward_(update);
@@ -383,7 +386,7 @@ Timeout StatusUpdateManagerProcess::forward(
   return delay(duration,
                self(),
                &StatusUpdateManagerProcess::timeout,
-               duration).timeout();
+               duration).timeout(); //如果指定时间没有收到ack重发，
 }
 
 
@@ -523,12 +526,12 @@ StatusUpdateStream* StatusUpdateManagerProcess::getStatusUpdateStream(
   return streams[frameworkId][taskId];
 }
 
-
+//frameworkId从streams中移除
 void StatusUpdateManagerProcess::cleanupStatusUpdateStream(
     const TaskID& taskId,
     const FrameworkID& frameworkId)
 {
-  VLOG(1) << "Cleaning up status update stream"
+  LOG(INFO) << "Cleaning up status update stream"
           << " for task " << taskId
           << " of framework " << frameworkId;
 
@@ -633,7 +636,7 @@ void StatusUpdateManager::resume()
   dispatch(process, &StatusUpdateManagerProcess::resume);
 }
 
-
+//frameworkId对应的framework从streams中移除
 void StatusUpdateManager::cleanup(const FrameworkID& frameworkId)
 {
   dispatch(process, &StatusUpdateManagerProcess::cleanup, frameworkId);
@@ -805,7 +808,7 @@ Try<Nothing> StatusUpdateStream::replay(
     return Error(error.get());
   }
 
-  VLOG(1) << "Replaying status update stream for task " << taskId;
+  LOG(INFO) << "Replaying status update stream for task " << taskId;
 
   foreach (const StatusUpdate& update, updates) {
     // Handle the update.

@@ -52,6 +52,17 @@ namespace allocator {
  *
  * This is the public API for resource allocators.
  */
+/* 
+Apache Mesos的任务分配过程:
+步骤1 当出现以下几种事件中的一种时，会触发资源分配行为：新框架注册、框架注销、增加节点、出现空闲资源等；
+步骤2 Mesos Master中的Allocator模块为某个框架分配资源，并将资源封装到ResourceOffersMessage（Protocal Buffer Message）中，通过网络传输给SchedulerProcess；
+步骤3 SchedulerProcess调用用户编写的Scheduler中的resourceOffers函数（不能版本可能有变动），告之有新资源可用；
+步骤4 用户的Scheduler调用MesosSchedulerDriver中的launchTasks()函数，告之将要启动的任务；
+步骤5 SchedulerProcess将待启动的任务封装到LaunchTasksMessage（Protocal Buffer Message）中，通过网络传输给Mesos Master；
+步骤6 Mesos Master将待启动的任务封装成RunTaskMessage发送给各个Mesos Slave；
+步骤7 Mesos Slave收到RunTaskMessage消息后，将之进一步发送给对应的ExecutorProcess；
+步骤8 ExecutorProcess收到消息后，进行资源本地化，并准备任务运行环境，最终调用用户编写的Executor中的launchTask启动任务（如果Executor尚未启动，则先要启动Executor）。
+*/
 class Allocator
 {
 public:

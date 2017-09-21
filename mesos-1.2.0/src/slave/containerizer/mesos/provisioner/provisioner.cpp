@@ -165,6 +165,7 @@ Try<Owned<Provisioner>> Provisioner::create(const Flags& flags)
   }
 
   CHECK_SOME(rootDir); // Can't be None since we just created it.
+  //LOG(INFO) << "yang test rootDir:" << rootDir;
 
   Try<hashmap<Image::Type, Owned<Store>>> stores = Store::create(flags);
   if (stores.isError()) {

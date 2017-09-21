@@ -129,7 +129,8 @@ private:
 // NOTE: A task is expected to have a globally unique ID across the lifetime
 // of a framework. In other words the tuple (taskId, frameworkId) should be
 // always unique.
-struct StatusUpdateStream
+struct StatusUpdateStream  
+//StatusUpdateManagerProcess::createStatusUpdateStream中new类并赋值
 {
   StatusUpdateStream(const TaskID& _taskId,
                      const FrameworkID& _frameworkId,

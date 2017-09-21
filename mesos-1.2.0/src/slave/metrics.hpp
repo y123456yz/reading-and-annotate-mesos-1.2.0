@@ -37,7 +37,7 @@ struct Metrics
 
   process::metrics::Gauge uptime_secs;
   process::metrics::Gauge registered;
-
+  
   process::metrics::Counter recovery_errors;
 
   process::metrics::Gauge frameworks_active;

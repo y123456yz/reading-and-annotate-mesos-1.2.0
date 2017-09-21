@@ -69,6 +69,7 @@ using mesos::v1::Credential;
 using mesos::v1::Environment;
 using mesos::v1::ExecutorInfo;
 using mesos::v1::FrameworkID;
+//在mesos-1.2.0/include头文件中定义
 using mesos::v1::FrameworkInfo;
 using mesos::v1::Image;
 using mesos::v1::Label;
@@ -454,8 +455,8 @@ protected:
 
   void killTask(const TaskID& taskId, const AgentID& agentId)
   {
-    cout << "Asked to kill task '" << taskId
-         << "' on agent '" << agentId << "'" << endl;
+    LOG(INFO) << "Asked to kill task '" << taskId
+         << "' on agent '" << agentId << "'" ;
 
     Call call;
     call.set_type(Call::KILL);
@@ -727,6 +728,7 @@ protected:
 
     // If a task kill delay has been specified, schedule task kill.
     if (killAfter.isSome() && TaskState::TASK_RUNNING == status.state()) {
+		LOG(INFO) << "delay kill";
       delay(killAfter.get(),
             self(),
             &Self::killTask,

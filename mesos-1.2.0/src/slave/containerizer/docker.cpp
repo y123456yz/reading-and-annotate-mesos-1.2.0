@@ -1537,13 +1537,13 @@ Future<bool> DockerContainerizerProcess::reapExecutor(
 
   // And finally watch for when the container gets reaped.
   container->status.set(process::reap(pid));
-
+  
+  LOG(INFO) << "DockerContainerizerProcess::reapExecutor";
   container->status.future().get()
     .onAny(defer(self(), &Self::reaped, containerId));
 
   return true;
 }
-
 
 Future<Nothing> DockerContainerizerProcess::update(
     const ContainerID& containerId,

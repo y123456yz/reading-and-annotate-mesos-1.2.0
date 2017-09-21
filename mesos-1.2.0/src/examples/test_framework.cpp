@@ -63,7 +63,7 @@ public:
       role(_role),
       tasksLaunched(0),
       tasksFinished(0),
-      totalTasks(5) {}
+      totalTasks(1) {}
 
   virtual ~TestScheduler() {}
 
@@ -77,7 +77,16 @@ public:
   virtual void reregistered(SchedulerDriver*, const MasterInfo& masterInfo) {}
 
   virtual void disconnected(SchedulerDriver* driver) {}
-
+  
+  /*
+	Allocator的initialize函数中，传入的OfferCallback是Master::offer。 
+	每过allocation_interval，Allocator都会计算每个framework的offer，然后依次调用Master::offer，
+	将资源offer给相应的framework
+	在Master::offer函数中，生成如下的ResourceOffersMessage，并且发送给Framework。
+	对应到这里当Driver收到ResourceOffersMessage的消息的时候，会调用SchedulerProcess::resourceOffers
+  
+	最终调用了Framework的resourceOffers。
+  */ //Test Framework的resourceOffers函数，根据得到的offers，创建一系列tasks，然后调用driver的launchTasks函数
   virtual void resourceOffers(SchedulerDriver* driver,
                               const vector<Offer>& offers)
   {
@@ -205,7 +214,10 @@ public:
   Option<string> master;
 };
 
-
+//每运行test-framework一次，
+//目录下面就会新增一个文件夹/home/XX/mesos-1.2.0/work-mesos/slaves/2d3afcca-962c-4200-8eef-230b718af0da-S0/frameworks/
+//slaves后面跟的代表一个slaves，一般如果是master设备，则slaves后面会有多个文件夹(slave数有多少就有多少个文件夹)
+//frameworks后面跟的是framework，有多少framework就会有多少个文件夹
 int main(int argc, char** argv)
 {
   // Find this executable's directory to locate executor.
@@ -240,13 +252,13 @@ int main(int argc, char** argv)
     LOG(WARNING) << warning.message;
   }
 
-  ExecutorInfo executor;
+  ExecutorInfo executor; //配置ExecutorInfo
   executor.mutable_executor_id()->set_value("default");
   executor.mutable_command()->set_value(uri);
   executor.set_name("Test Executor (C++)");
   executor.set_source("cpp_test");
 
-  FrameworkInfo framework;
+  FrameworkInfo framework; //配置FrameworkInfo
   framework.set_user(""); // Have Mesos fill in the current user.
   framework.set_name("Test Framework (C++)");
   framework.set_role(flags.role);
@@ -256,6 +268,12 @@ int main(int argc, char** argv)
     framework.set_checkpoint(
         numify<bool>(value.get()).get());
   }
+  
+  cout << "yang test .......uri:" << uri << endl;
+  //yang test .......uri:/home/yangyazhou/mesos-1.2.0/src/.libs/test-executor
+  //cout << "  MESOS_CHECKPOINT:" << value.get() << endl; 
+  //printf("MESOS_EXPLICIT_ACKNOWLEDGEMENTS:%s\r\n", getenv("MESOS_EXPLICIT_ACKNOWLEDGEMENTS"));
+ // cout << "yang test ..3.....uri:" << uri << endl;
 
   bool implicitAcknowledgements = true;
   if (os::getenv("MESOS_EXPLICIT_ACKNOWLEDGEMENTS").isSome()) {
@@ -263,7 +281,13 @@ int main(int argc, char** argv)
 
     implicitAcknowledgements = false;
   }
+  //cout << "yang test ....1...uri:" << uri << endl;
 
+  //创建TestScheduler和MesosSchedulerDriver
+  //MesosSchedulerDriver是写Framework的SDK似得的东西，使得写一个Framework非常简单，至于
+  //和Mesos-Master的通信等细节，都封装在MesosSchedulerDriver里面了。
+
+  //Mesos-Slave的初始化中，Mesos-Slave接收到RunTaskMessage消息，会调用Slave::runTask.
   MesosSchedulerDriver* driver;
   TestScheduler scheduler(implicitAcknowledgements, executor, flags.role);
 
@@ -305,6 +329,7 @@ int main(int argc, char** argv)
         implicitAcknowledgements);
   }
 
+  //运行MesosSchedulerDriver
   int status = driver->run() == DRIVER_STOPPED ? 0 : 1;
 
   // Ensure that the driver process terminates.

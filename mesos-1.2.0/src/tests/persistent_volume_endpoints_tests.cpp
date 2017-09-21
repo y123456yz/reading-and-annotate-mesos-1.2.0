@@ -46,6 +46,12 @@ using std::vector;
 
 using google::protobuf::RepeatedPtrField;
 
+/*
+每过allocation_interval，Allocator都会计算每个framework的offer，然后依次调用Master::offer，
+将资源offer给相应的framework
+
+在Master::offer函数中，生成如下的ResourceOffersMessage，并且发送给Framework。
+*/
 using mesos::internal::master::DEFAULT_ALLOCATION_INTERVAL;
 using mesos::internal::master::Master;
 using mesos::internal::slave::Slave;

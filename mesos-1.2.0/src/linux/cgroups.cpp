@@ -911,12 +911,14 @@ Try<Nothing> kill(
     return error.get();
   }
 
-  Try<set<pid_t>> pids = processes(hierarchy, cgroup);
+  Try<set<pid_t>> pids = processes(hierarchy, cgroup); 
+  //在cgroup.proc该文件中的kill函数中调用该process获取cgroup.procs中的所有pid进程信息
   if (pids.isError()) {
     return Error("Failed to get processes of cgroup: " + pids.error());
   }
 
   foreach (pid_t pid, pids.get()) {
+  	LOG(INFO) << "kill pid:" << pid << " signal:" << signal;
     if (::kill(pid, signal) == -1) {
       // If errno is set to ESRCH, it means that either a) this process already
       // terminated, or b) it's in a 'zombie' state and we can't signal it
@@ -1020,25 +1022,45 @@ Try<set<pid_t>> tasks(
 } // namespace internal {
 
 
+
+/*
+Tasks   RW    属于分组的线程 TID 列表      线程号和进程号都会写入这里面
+Cgroup.procs   R   属于分组的进程 PID 列表。仅包括多线程进程的线程 leader 的 TID，这点与 tasks 不同   只有进程号写到这里面
+
+├─rsyslogd(36761)─┬─{rsyslogd}(36762)
+│				   ├─{rsyslogd}(36763)
+│				   └─{rsyslogd}(36764)
+
+一般他们会写入同一个cgroup，如果把其中一个线程号通过echo > xxx/tasks 罗到其他cgroup的tasks,
+则进程号也会在新的cgroup中存在(源cgroup和新cgoup的cgroup.proc都可以看到有该进程号，tasks中只
+有目的tasks中有该线程号)，但是剩余的线程号还是在原来的cgroup中
+36761写入Cgroup.procs
+36761 36762 36763  36764写入tasks
+
+如果是把36761进程号罗到其他cgroup的cgroup.proc文件,则改进程下面的线程也会全部罗到新的cgroup的tasks中
+cat /proc/pid/cgroup看到的是进程号所在的cgroup
+*/
+
 // NOTE: It is possible for a process pid to be in more than one cgroup if it
 // has separate threads (tasks) in different cgroups.
-Try<set<pid_t>> processes(const string& hierarchy, const string& cgroup)
-{
+Try<set<pid_t>> processes(const string& hierarchy, const string& cgroup) //获取cgroup.procs中所有的pid
+{ 
+  //在该文件中的kill函数中调用该process获取cgroup.procs中的所有pid进程信息
+  LOG(INFO) << "yang add test cgroup::processes" << hierarchy << " "<< cgroup << " cgroup.procs";
   return internal::tasks(hierarchy, cgroup, "cgroup.procs");
 }
 
-
 Try<set<pid_t>> threads(const string& hierarchy, const string& cgroup)
 {
+  LOG(INFO) << "yang add test 111 cgroup::threads" << hierarchy << " "<< cgroup << " tasks";
   return internal::tasks(hierarchy, cgroup, "tasks");
 }
 
-
 Try<Nothing> assign(const string& hierarchy, const string& cgroup, pid_t pid)
 {
+  LOG(INFO) << "yang add test 2222 cgroup::assign" << hierarchy << " "<< cgroup << " cgroup.procs";
   return cgroups::write(hierarchy, cgroup, "cgroup.procs", stringify(pid));
 }
-
 
 Try<Nothing> isolate(
     const string& hierarchy,
@@ -1474,7 +1496,7 @@ private:
 
 
 // The process used to atomically kill all tasks in a cgroup.
-class TasksKiller : public Process<TasksKiller>
+class TasksKiller : public Process<TasksKiller>  //class Destroyer类中使用该类
 {
 public:
   TasksKiller(const string& _hierarchy, const string& _cgroup)
@@ -1523,6 +1545,7 @@ private:
     // We thaw the cgroup before trying to freeze again to allow any
     // pending signals to be delivered. See MESOS-1689 for details.
     // This is a short term hack until we have PID namespace support.
+    LOG(INFO) << "freezeTimedout";
     return Future<bool>(true)
       .then(defer(pid, &Self::kill))
       .then(defer(pid, &Self::thaw))
@@ -1531,6 +1554,7 @@ private:
 
   void killTasks() {
     // Chain together the steps needed to kill all tasks in the cgroup.
+    LOG(INFO) << "killTasks";
     chain = freeze()                     // Freeze the cgroup.
       .then(defer(self(), &Self::kill))  // Send kill signal.
       .then(defer(self(), &Self::thaw))  // Thaw cgroup to deliver signal.
@@ -1560,6 +1584,8 @@ private:
     foreach (const pid_t pid, processes.get()) {
       statuses.push_back(process::reap(pid));
     }
+
+	LOG(INFO) << "kill " << hierarchy << " " << cgroup;
 
     Try<Nothing> kill = cgroups::kill(hierarchy, cgroup, SIGKILL);
     if (kill.isError()) {
@@ -1626,7 +1652,7 @@ private:
 
 
 // The process used to destroy a cgroup.
-class Destroyer : public Process<Destroyer>
+class Destroyer : public Process<Destroyer>  //destroy函数中使用，例如mesos-agent启动的时候，就会通过这里kill freezer中的进程
 {
 public:
   Destroyer(const string& _hierarchy, const vector<string>& _cgroups)
@@ -1669,6 +1695,7 @@ protected:
 private:
   void killed(const Future<list<Nothing>>& kill)
   {
+    LOG(INFO) << "kill ";
     if (kill.isReady()) {
       remove();
     } else if (kill.isDiscarded()) {
@@ -1712,7 +1739,8 @@ private:
 
 } // namespace internal {
 
-
+//destroy函数中使用，例如mesos-agent启动的时候，就会通过这里kill freezer cgroup.proc中的进程 
+//LinuxLauncherProcess::destroy中调用
 Future<Nothing> destroy(const string& hierarchy, const string& cgroup)
 {
   // Construct the vector of cgroups to destroy.
@@ -1772,7 +1800,7 @@ static void __destroy(
   }
 }
 
-
+//LinuxLauncherProcess::destroy中调用
 static Future<Nothing> _destroy(
     Future<Nothing> future,
     const Duration& timeout)
@@ -1786,7 +1814,7 @@ static Future<Nothing> _destroy(
   return _future;
 }
 
-
+//LinuxLauncherProcess::destroy中调用
 Future<Nothing> destroy(
     const string& hierarchy,
     const string& cgroup,

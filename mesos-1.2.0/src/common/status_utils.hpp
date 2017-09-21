@@ -25,6 +25,7 @@
 // Return whether the wait(2) status was a successful process exit.
 inline bool WSUCCEEDED(int status)
 {
+  system(" echo WSUCCEEDED >> /yyz2.log");
   return WIFEXITED(status) && WEXITSTATUS(status) == 0;
 }
 

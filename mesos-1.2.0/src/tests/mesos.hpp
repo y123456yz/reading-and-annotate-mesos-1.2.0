@@ -1922,6 +1922,7 @@ public:
         launchGroup(mesos, event.launch_group());
         break;
       case Event::KILL:
+	  	LOG(INFO) << "event KILL";
         kill(mesos, event.kill());
         break;
       case Event::ACKNOWLEDGED:

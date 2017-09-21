@@ -181,6 +181,8 @@ void MockSlave::unmocked_killTask(
     const UPID& from,
     const KillTaskMessage& killTaskMessage)
 {
+	LOG(INFO) << "unmocked_killTask ";
+
   slave::Slave::killTask(from, killTaskMessage);
 }
 

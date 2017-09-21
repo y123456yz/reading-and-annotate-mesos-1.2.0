@@ -93,9 +93,9 @@ private:
   // used to represent a collection of processes. This container may
   // also have multiple namespaces associated with it but that is not
   // managed explicitly here.
-  struct Container
+  struct Container //LinuxLauncherProcess::fork 中构建空间和使用
   {
-    ContainerID id;
+    ContainerID id; //一个Container对应一个子进程pid
 
     // NOTE: this represents the "init" of the container that we
     // created (it may be for an executor, or any arbitrary process
@@ -104,7 +104,7 @@ private:
     // This is none when it's an orphan container (i.e., we have a
     // freezer cgroup but we were not expecting the container during
     // `LinuxLauncher::recover`).
-    Option<pid_t> pid = None();
+    Option<pid_t> pid = None(); //一个Container对应一个子进程pid
   };
 
   // Helper for determining the cgroup for a container (i.e., the path
@@ -119,16 +119,19 @@ private:
   const Flags flags;
   const std::string freezerHierarchy;
   const Option<std::string> systemdHierarchy;
+
+  //LinuxLauncherProcess::fork
   hashmap<ContainerID, Container> containers;
 };
 
-
+//创建LinuxLauncher任务类
 Try<Launcher*> LinuxLauncher::create(const Flags& flags)
 {
   Try<string> freezerHierarchy = cgroups::prepare(
       flags.cgroups_hierarchy,
       "freezer",
       flags.cgroups_root);
+  LOG(INFO) << "Using cgroups_hierarchy: " << flags.cgroups_hierarchy << "Using cgroups_root: " << flags.cgroups_root;
 
   if (freezerHierarchy.isError()) {
     return Error(
@@ -229,9 +232,10 @@ Try<pid_t> LinuxLauncher::fork(
       cloneNamespaces).get();
 }
 
-
+//kill freezer cgroup.proc中包含的所有进程   MesosContainerizerProcess::destroy中执行
 Future<Nothing> LinuxLauncher::destroy(const ContainerID& containerId)
 {
+  LOG(INFO) << "LinuxLauncher::destroy " << containerId;
   return dispatch(process.get(), &LinuxLauncherProcess::destroy, containerId);
 }
 
@@ -259,7 +263,8 @@ Future<hashset<ContainerID>> LinuxLauncherProcess::recover(
   // Recover all of the "containers" we know about based on the
   // existing cgroups.
   Try<vector<string>> cgroups =
-    cgroups::get(freezerHierarchy, flags.cgroups_root);
+    cgroups::get(freezerHierarchy, flags.cgroups_root); 
+  //通过cgroups_root获取现在该slave中有哪些container，然后在后面流程中kill掉
 
   if (cgroups.isError()) {
     return Failure(
@@ -378,11 +383,15 @@ Future<hashset<ContainerID>> LinuxLauncherProcess::recover(
   return orphans;
 }
 
+//Slave::runTask->Slave::run->Slave::_run->Framework::launchExecutor->MesosContainerizer::launch
+//->MesosContainerizerProcess::launch(lauuch有好几个接口，一般是第三个lauch接口走到这里)
+//->MesosContainerizerProcess::_launch->LinuxLauncherProcess::fork(启动mesos-containerizer进程)
 
-Try<pid_t> LinuxLauncherProcess::fork(
+//MesosContainerizerProcess::_launch中执行
+Try<pid_t> LinuxLauncherProcess::fork( //为这个containerId创建相应的进程
     const ContainerID& containerId,
-    const string& path,
-    const vector<string>& argv,
+    const string& path, //进程名，如mesos-containerizer
+    const vector<string>& argv, //进程后面携带的参数，如mesos-containerizer进程的lauch参数
     const process::Subprocess::IO& in,
     const process::Subprocess::IO& out,
     const process::Subprocess::IO& err,
@@ -392,7 +401,7 @@ Try<pid_t> LinuxLauncherProcess::fork(
     const Option<int>& cloneNamespaces)
 {
   // Make sure this container (nested or not) is unique.
-  if (containers.contains(containerId)) {
+  if (containers.contains(containerId)) { //已经为该containerId创建过相应的进程，则直接退出
     return Error("Container '" + stringify(containerId) + "' already exists");
   }
 
@@ -426,6 +435,8 @@ Try<pid_t> LinuxLauncherProcess::fork(
 
   int cloneFlags = cloneNamespaces.isSome() ? cloneNamespaces.get() : 0;
 
+  //linux_launcher.cpp:430] Launching container c21dab1d-4c73-423d-9123-cf1fb4dd4567 and cloning with namespaces 
+  //container对应slaves/2d3afcca-962c-4200-8eef-230b718af0da-S0/frameworks/2d3afcca-962c-4200-8eef-230b718af0da-0010/executors/default/runs/c21dab1d-4c73-423d-9123-cf1fb4dd4567 executors后面的随机字符串
   LOG(INFO) << "Launching " << (target.isSome() ? "nested " : "")
             << "container " << containerId << " and cloning with namespaces "
             << ns::stringify(cloneFlags);
@@ -446,6 +457,7 @@ Try<pid_t> LinuxLauncherProcess::fork(
 
   if (systemdHierarchy.isSome()) {
     parentHooks.emplace_back(Subprocess::ParentHook([](pid_t child) {
+	  //mesos_executors.slice设置
       return systemd::mesos::extendLifetime(child);
     }));
   }
@@ -458,7 +470,11 @@ Try<pid_t> LinuxLauncherProcess::fork(
         child);
   }));
 
-  Try<Subprocess> child = subprocess(
+   LOG(INFO) << "lauchflags:" << flags;
+  //fork创建子进程
+  //这里实际上获取到的是mesos-containerizer launch进程的ID, 
+  //mesos-containerizer lauch进程运行的地方在MesosContainerizerMount::execute 
+  Try<Subprocess> child = subprocess( //这里返回的是mesos-containerizer launch的进程号信息
       path,
       argv,
       in,
@@ -491,15 +507,61 @@ Try<pid_t> LinuxLauncherProcess::fork(
   }
 
   Container container;
-  container.id = containerId;
+  //一个Container对应一个子进程pid
+  container.id = containerId; 
   container.pid = child.get().pid();
+  //LOG(INFO) << "yang test .LinuxLauncherProcess::fork... pid:" << container.pid.get(); 
+  //这里打印出来的是 /usr/local/libexec/mesos/mesos-containerizer launch进程号
 
+  //所有的container加入到containers  map表中
   containers.put(container.id, container);
 
   return container.pid.get();
 }
 
+/*
+I0810 14:37:18.096990 28462 slave.cpp:543] Agent resources: cpus(*):8; mem(*):6729; disk(*):888143; ports(*):[31000-32000]
+I0810 14:37:18.097048 28462 slave.cpp:551] Agent attributes: [  ]
+I0810 14:37:18.097064 28462 slave.cpp:556] Agent hostname: localhost
+I0810 14:37:18.097221 28465 status_update_manager.cpp:177] Pausing sending status updates
+I0810 14:37:18.104713 28464 state.cpp:62] Recovering state from '/home/yangyazhou/mesos-1.2.0/work-mesos/meta'
+I0810 14:37:18.104763 28464 state.cpp:706] No committed checkpointed resources found at '/home/yangyazhou/mesos-1.2.0/work-mesos/meta/resources/resources.info'
+I0810 14:37:18.106063 28462 status_update_manager.cpp:203] Recovering status update manager
+I0810 14:37:18.106276 28465 containerizer.cpp:610] Recovering containerizer
+I0810 14:37:18.107316 28465 containerizer.cpp:2506] MesosContainerizerProcess::reap  1111111/var/run/mesos/containers/729728f5-852b-49aa-a10d-e7b1c4d14654
+I0810 14:37:18.107353 28465 containerizer.cpp:2527] MesosContainerizerProcess::reap  end
+I0810 14:37:18.108485 28466 linux_launcher.cpp:294] Recovered container 729728f5-852b-49aa-a10d-e7b1c4d14654
+I0810 14:37:18.108505 28466 cgroups.cpp:1047] yang add test cgroup::processes/sys/fs/cgroup/systemd mesos_executors.slice cgroup.procs
+I0810 14:37:18.109096 28466 linux_launcher.cpp:376] 729728f5-852b-49aa-a10d-e7b1c4d14654 is a known orphaned container
+I0810 14:37:18.110858 28465 provisioner.cpp:411] Provisioner recovery complete
+I0810 14:37:18.111071 28465 containerizer.cpp:944] MesosContainerizerProcess::__recover:729728f5-852b-49aa-a10d-e7b1c4d14654
+I0810 14:37:18.111084 28465 containerizer.cpp:949] Cleaning up orphan container 729728f5-852b-49aa-a10d-e7b1c4d14654
+I0810 14:37:18.111104 28465 containerizer.cpp:2176] Destroying container 729728f5-852b-49aa-a10d-e7b1c4d14654 in RUNNING state
+I0810 14:37:18.111549 28465 containerizer.cpp:2542] MesosContainerizerProcess::reaped
+I0810 14:37:18.111567 28465 containerizer.cpp:2547] Container 729728f5-852b-49aa-a10d-e7b1c4d14654 has exited
+I0810 14:37:18.111613 28464 slave.cpp:5593] Finished recovery
+I0810 14:37:18.111724 28461 linux_launcher.cpp:512] Asked to destroy container 729728f5-852b-49aa-a10d-e7b1c4d14654
+I0810 14:37:18.112435 28465 status_update_manager.cpp:177] Pausing sending status updates
+I0810 14:37:18.112471 28464 slave.cpp:949] New master detected at master@172.23.133.32:5050
+I0810 14:37:18.112505 28464 slave.cpp:973] No credentials provided. Attempting to register without authentication
+I0810 14:37:18.112548 28464 slave.cpp:984] Detecting new master
+I0810 14:37:18.112615 28461 linux_launcher.cpp:555] Using freezer to destroy cgroup mesos/729728f5-852b-49aa-a10d-e7b1c4d14654
+I0810 14:37:18.113979 28462 cgroups.cpp:1555] killTasks
+I0810 14:37:18.114054 28462 cgroups.cpp:2717] Freezing cgroup /run/lxcfs/controllers/freezer/mesos/729728f5-852b-49aa-a10d-e7b1c4d14654
+I0810 14:37:18.115806 28463 cgroups.cpp:1425] Successfully froze cgroup /run/lxcfs/controllers/freezer/mesos/729728f5-852b-49aa-a10d-e7b1c4d14654 after 1.720064ms
+I0810 14:37:18.116044 28462 cgroups.cpp:1047] yang add test cgroup::processes/run/lxcfs/controllers/freezer mesos/729728f5-852b-49aa-a10d-e7b1c4d14654 cgroup.procs
+I0810 14:37:18.116657 28462 cgroups.cpp:1586] kill /run/lxcfs/controllers/freezer mesos/729728f5-852b-49aa-a10d-e7b1c4d14654
+I0810 14:37:18.117182 28462 cgroups.cpp:1047] yang add test cgroup::processes/run/lxcfs/controllers/freezer mesos/729728f5-852b-49aa-a10d-e7b1c4d14654 cgroup.procs
+I0810 14:37:18.117764 28462 cgroups.cpp:2735] Thawing cgroup /run/lxcfs/controllers/freezer/mesos/729728f5-852b-49aa-a10d-e7b1c4d14654
+I0810 14:37:18.119472 28460 cgroups.cpp:1454] Successfully thawed cgroup /run/lxcfs/controllers/freezer/mesos/729728f5-852b-49aa-a10d-e7b1c4d14654 after 1.67808ms
+I0810 14:37:18.119717 28462 cgroups.cpp:1047] yang add test cgroup::processes/run/lxcfs/controllers/freezer mesos/729728f5-852b-49aa-a10d-e7b1c4d14654 cgroup.procs
+I0810 14:37:18.120448 28463 cgroups.cpp:1696] kill
+I0810 14:37:18.943577 28464 slave.cpp:1260] Re-registered with master master@172.23.133.32:5050
+I0810 14:37:18.943702 28464 slave.cpp:1297] Forwarding total oversubscribed resources {}
+I0810 14:37:18.943886 28464 status_update_manager.cpp:184] Resuming sending status updates
+*/
 
+//LinuxLauncher::destroy中会调用,kill freezer cgroup.proc中包含的所有进程
 Future<Nothing> LinuxLauncherProcess::destroy(const ContainerID& containerId)
 {
   LOG(INFO) << "Asked to destroy container " << containerId;

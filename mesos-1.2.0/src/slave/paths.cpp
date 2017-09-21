@@ -50,6 +50,7 @@ namespace paths {
 // File names.
 const char BOOT_ID_FILE[] = "boot_id";
 const char SLAVE_INFO_FILE[] = "slave.info";
+///data1/mesos/meta/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S1/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/framework.pid
 const char FRAMEWORK_PID_FILE[] = "framework.pid";
 const char FRAMEWORK_INFO_FILE[] = "framework.info";
 const char LIBPROCESS_PID_FILE[] = "libprocess.pid";
@@ -137,7 +138,7 @@ string getBootIdPath(const string& rootDir)
   return path::join(rootDir, BOOT_ID_FILE);
 }
 
-
+//work-mesos/meta/slaves/latest -> ./work-mesos/meta/slaves/fba6e290-5566-420e-8489-1dc87ddfdc93-S18
 string getLatestSlavePath(const string& rootDir)
 {
   return path::join(rootDir, SLAVES_DIR, LATEST_SYMLINK);
@@ -168,17 +169,17 @@ Try<list<string>> getFrameworkPaths(
       path::join(getSlavePath(rootDir, slaveId), FRAMEWORKS_DIR, "*"));
 }
 
-
+//meta/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S1/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1
 string getFrameworkPath(
     const string& rootDir,
     const SlaveID& slaveId,
     const FrameworkID& frameworkId)
 {
-  return path::join(
+  return path::join( //meta/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S1/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1
       getSlavePath(rootDir, slaveId), FRAMEWORKS_DIR, stringify(frameworkId));
 }
 
-
+///data1/mesos/meta/slaves/ff6822fa-1ac1-4f87-aeae-30edac0f94be-S1/frameworks/OCEANBANK_FRAMEWORK_VERSION_1.1/framework.pid
 string getFrameworkPidPath(
     const string& rootDir,
     const SlaveID& slaveId,
@@ -428,7 +429,7 @@ string getTaskUpdatesPath(
       TASK_UPDATES_FILE);
 }
 
-
+//  meta/resources/resources.info
 string getResourcesInfoPath(
     const string& rootDir)
 {
@@ -494,7 +495,7 @@ string getPersistentVolumePath(
   UNREACHABLE();
 }
 
-
+//´´½¨Ä¿Â¼:/work-mesos/slaves/6f7a4b18-4c38-4bf6-8d89-5d47835ce694-S0/frameworks/6f7a4b18-4c38-4bf6-8d89-5d47835ce694-0000/executors/default/runs/d42c083b-3809-4633-bf95-e6506484bc7f
 string createExecutorDirectory(
     const string& rootDir,
     const SlaveID& slaveId,
